@@ -55,16 +55,72 @@ import * as file54 from './data/csse_covid_19_data/csse_covid_19_daily_reports/0
 import * as file55 from './data/csse_covid_19_data/csse_covid_19_daily_reports/03-15-2020.csv';
 import { group, rollup } from 'd3-array';
 import * as d3 from 'd3';
+
+const format = d3.timeFormat('%Y-%m-%d');
+
+function stripUnused(obj, prop) {
+  const { [prop]: none, ...rest} = obj;
+  return rest;
+}
+
+function cleanItem(d) {
+  let s = stripUnused(d, 'Province/State')
+  let sDays = [];
+
+  if(sDays.indexOf(s['Last Update']) >= 0) {
+    return null
+  }
+
+  s['Last Update'] = format(new Date(s['Last Update']));
+  sDays.push(s['Last Update']);
+
+  if(s['Country/Region'] === 'Mainland China') {
+    s['Country/Region'] = 'China'
+  }
+
+  return s;
+
+}
+
+function dataPrep(src) {
+  let data = []
+  src.forEach(ss => {
+
+    const item = ss.map(cleanItem);
+
+    if(item) {
+      data = [ ...data, ...item];
+    }
+  });
+
+
+  const countries = Array.from(new Set(data.map(d => d['Country/Region'])));
+  const days = Array.from(new Set(data.map(d => d['Last Update'])));
+
+  const byCountry = group(data, d => d['Country/Region'], d => d['Last Update']);
+
+  const unwrapped = Array.from(byCountry, ([key, value]) => Array.from(value, (v, k) => {
+      const arr = v[1];
+      return { ...arr[arr.length-1] }
+  }));
+
+  console.log('aaaaaaaaa', unwrapped);
+
+
+  return { raw: data, countries, days, unwrapped };
+}
+
+
 export const files = [
 file01,
-file02 ,
-file03 ,
-file04 ,
-file05 ,
-file06 ,
-file07 ,
-file08 ,
-file09 ,
+file02,
+file03,
+file04,
+file05,
+file06,
+file07,
+file08,
+file09,
 file10,
 file11,
 file12,
@@ -174,62 +230,10 @@ export const dates = [
 
 
 
-const format = d3.timeFormat('%Y-%m-%d');
-
-function stripUnused(obj, prop) {
-  const { [prop]: none, ...rest} = obj;
-  return rest;
-}
-
-function cleanItem(d) {
-  let s = stripUnused(d, 'Province/State')
-  let sDays = [];
-
-  if(sDays.indexOf(s['Last Update']) >= 0) {
-    return null
-  }
-
-  s['Last Update'] = format(new Date(s['Last Update']));
-  sDays.push(s['Last Update']);
-
-  if(s['Country/Region'] === 'Mainland China') {
-    s['Country/Region'] = 'China'
-  }
-
-  return s;
-
-}
-
-function dataPrep(src) {
-  let data = []
-  src.forEach(ss => {
-
-    const item = ss.map(cleanItem);
-
-    if(item) {
-      data = [ ...data, ...item];
-    }
-  });
-
-
-  const countries = Array.from(new Set(data.map(d => d['Country/Region'])));
-  const days = Array.from(new Set(data.map(d => d['Last Update'])));
-
-  const byCountry = group(data, d => d['Country/Region'], d => d['Last Update']);
-
-  const unwrapped = Array.from(byCountry, ([key, value]) => Array.from(value, (v, k) => {
-      const arr = v[1];
-      return { ...arr[arr.length-1] }
-  }));
-
-  console.log('aaaaaaaaa', unwrapped);
-
-
-  return { raw: data, countries, days, unwrapped };
-}
-
 
 export default {
   files,
   dataPrep
 }
+
+

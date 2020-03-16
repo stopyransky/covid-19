@@ -1,12 +1,15 @@
 import * as d3 from 'd3';
 
+let selected = '';
+const dispatcher = d3.dispatch('datapointClick')
+
 function init(svg, data) {
 
     const margin = {
     top: 50,
     bottom: 50,
     left: 50,
-    right: 90,
+    right: 50,
   }
 
   const screen = {
@@ -14,6 +17,7 @@ function init(svg, data) {
     height: window.innerHeight - margin.top - margin.bottom,
     margin
   }
+
 
 
   const svgSelection = d3.select(svg);
@@ -45,30 +49,40 @@ function init(svg, data) {
     .attr('class', 'label')
     .attr('display', 'none');
 
+
   main
   .selectAll('path')
   .data(data.unwrapped, d => d[0]['Country/Region'])
   .enter()
   .append('path')
-  .attr('class', d => d[0]['Country/Region'])
-  .attr('d', d => lineGen(d))
-  .attr('fill', 'none')
-  .attr('stroke', (d, i) => d[0]['Country/Region'] === 'Poland' ? 'red': '#ccc')
-  .attr('stroke-width', d => d[0]['Country/Region'] === 'Poland' ?  5 : 1)
-  .on('mouseover', (d, i, n) => {
-    console.log(d)
-    d3.select(n[i]).attr('stroke', 'black')
-    d3.select('.label')
-    .attr('display', null)
-    .attr('x', screen.width + screen.margin.left + 3)
-    .attr('y', yScale(d[d.length-1]['Confirmed']))
-    .text(d[0]['Country/Region'])
-  })
-  .on('mouseout', (d, i, n) => {
-    const isPoland = d[0]['Country/Region'] === 'Poland'
-    d3.select(n[i]).attr('stroke', isPoland ? 'red' : '#ccc')
-    d3.select('.label').attr('display', 'none')
-  });
+    .attr('class', d => d[0]['Country/Region'])
+    .attr('d', d => lineGen(d))
+    .attr('fill', 'none')
+    .attr('stroke', '#ccc')
+    .attr('stroke-width', 1)
+    .on('mouseover', (d, i, n) => {
+      const country = d[0]['Country/Region'];
+      if(selected !== country) {
+        d3.select(n[i]).attr('stroke', 'black').attr('stroke-width', 3)
+      }
+      d3.select('.label')
+      .attr('display', null)
+      .attr('text-anchor', 'middle')
+      .attr('x', screen.width)
+      .attr('y', yScale(d[d.length-1]['Confirmed']))
+      .text(country)
+    })
+    .on('mouseout', (d, i, n) => {
+      if(selected !== d[0]['Country/Region']) {
+        d3.select(n[i]).attr('stroke', '#ccc').attr('stroke-width', 1)
+      }
+      d3.select('.label').attr('display', 'none')
+    })
+    .on('mouseup', (d, i, n) => {
+      const country =d[0]['Country/Region']
+      handleSelect(country);
+      dispatcher.call('datapointClick', null, country)
+    })
 
   const xAxis = d3.axisBottom(xScale);
 
@@ -83,6 +97,7 @@ function init(svg, data) {
     200, 500, 1000,
     2000, 5000, 10000,
     15000, 20000, 30000, 40000, 50000, ...yDomain])
+
     svgSelection.append('g')
     .attr('class', 'y-axis')
     .attr('transform', `translate(${screen.width}, ${0})`)
@@ -91,6 +106,15 @@ function init(svg, data) {
 
 }
 
+
+function handleSelect(selectedCountry) {
+  selected = selectedCountry;
+  d3.selectAll('path').attr('stroke', '#ccc').attr('stroke-width', 1)
+  d3.select(`path.${selectedCountry}`).attr('stroke', 'red').attr('stroke-width', 5)
+}
+
 export default {
-  init
+  init,
+  handleSelect,
+  dispatcher,
 }
