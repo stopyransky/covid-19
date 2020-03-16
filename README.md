@@ -1,48 +1,68 @@
-# 2019 Novel Coronavirus COVID-19 (2019-nCoV) Data Repository by Johns Hopkins CSSE
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Available Scripts
 
-This is the data repository for the 2019 Novel Coronavirus Visual Dashboard operated by the Johns Hopkins University Center for Systems Science and Engineering (JHU CSSE). Also, Supported by ESRI Living Atlas Team and the Johns Hopkins University Applied Physics Lab (JHU APL).
+In the project directory, you can run:
 
-<br>
+### `yarn start`
 
-<b>Visual Dashboard (desktop):</b><br>
-https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6
-<br><br>
-<b>Visual Dashboard (mobile):</b><br>
-http://www.arcgis.com/apps/opsdashboard/index.html#/85320e2ea5424dfaaa75ae62e5c06e61
-<br><br>
-<b>Lancet Article:</b><br>
-[An interactive web-based dashboard to track COVID-19 in real time](https://doi.org/10.1016/S1473-3099(20)30120-1)
-<br><br>
-<b>Provided by Johns Hopkins University Center for Systems Science and Engineering (JHU CSSE):</b><br>
-https://systems.jhu.edu/
-<br><br>
-<b>Data Sources:</b><br>
-* World Health Organization (WHO): https://www.who.int/ <br>
-* DXY.cn. Pneumonia. 2020. http://3g.dxy.cn/newh5/view/pneumonia.  <br>
-* BNO News: https://bnonews.com/index.php/2020/02/the-latest-coronavirus-cases/  <br>
-* National Health Commission of the People’s Republic of China (NHC): <br>
- http://www.nhc.gov.cn/xcs/yqtb/list_gzbd.shtml <br>
-* China CDC (CCDC): http://weekly.chinacdc.cn/news/TrackingtheEpidemic.htm <br>
-* Hong Kong Department of Health: https://www.chp.gov.hk/en/features/102465.html <br>
-* Macau Government: https://www.ssm.gov.mo/portal/ <br>
-* Taiwan CDC: https://sites.google.com/cdc.gov.tw/2019ncov/taiwan?authuser=0 <br>
-* US CDC: https://www.cdc.gov/coronavirus/2019-ncov/index.html <br>
-* Government of Canada: https://www.canada.ca/en/public-health/services/diseases/coronavirus.html <br>
-* Australia Government Department of Health: https://www.health.gov.au/news/coronavirus-update-at-a-glance <br>
-* European Centre for Disease Prevention and Control (ECDC): https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases 
-* Ministry of Health Singapore (MOH): https://www.moh.gov.sg/covid-19
-* Italy Ministry of Health: http://www.salute.gov.it/nuovocoronavirus
+Runs the app in the development mode.<br />
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-<br>
-<b>Additional Information about the Visual Dashboard:</b><br>
-https://systems.jhu.edu/research/public-health/ncov/
-<br><br>
+The page will reload if you make edits.<br />
+You will also see any lint errors in the console.
 
-<b>Contact Us: </b><br>
-* Email: jhusystems@gmail.com
-<br><br>
+### `yarn test`
 
-<b>Terms of Use:</b><br>
+Launches the test runner in the interactive watch mode.<br />
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-This GitHub repo and its contents herein, including all data, mapping, and analysis, copyright 2020 Johns Hopkins University, all rights reserved, is provided to the public strictly for educational and academic research purposes.  The Website relies upon publicly available data from multiple sources, that do not always agree. The Johns Hopkins University hereby disclaims any and all representations and warranties with respect to the Website, including accuracy, fitness for use, and merchantability.  Reliance on the Website for medical guidance or use of the Website in commerce is strictly prohibited.
+### `yarn build`
+
+Builds the app for production to the `build` folder.<br />
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.<br />
+Your app is ready to be deployed!
+
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
+### `yarn eject`
+
+**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+
+If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+
+You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+
+### Analyzing the Bundle Size
+
+This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+
+### Making a Progressive Web App
+
+This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+
+### Advanced Configuration
+
+This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+
+### Deployment
+
+This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+
+### `yarn build` fails to minify
+
+This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
