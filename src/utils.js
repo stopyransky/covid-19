@@ -53,8 +53,11 @@ import * as file52 from './data/csse_covid_19_data/csse_covid_19_daily_reports/0
 import * as file53 from './data/csse_covid_19_data/csse_covid_19_daily_reports/03-13-2020.csv';
 import * as file54 from './data/csse_covid_19_data/csse_covid_19_daily_reports/03-14-2020.csv';
 import * as file55 from './data/csse_covid_19_data/csse_covid_19_daily_reports/03-15-2020.csv';
-import { group, rollup } from 'd3-array';
+
+import * as wdvp from './wdvp-new.csv';
+
 import * as d3 from 'd3';
+import { group, rollup } from 'd3-array';
 
 const format = d3.timeFormat('%Y-%m-%d');
 
@@ -64,7 +67,15 @@ function stripUnused(obj, prop) {
 }
 
 function cleanItem(d) {
-  let s = stripUnused(d, 'Province/State')
+  let s = stripUnused(d, 'Province/State');
+  s['Country/Region'] = s['Country/Region']
+    .replace('(', '')
+    .replace(')', '')
+    .replace(',', '')
+    .replace('.', '')
+    .replace('*', '')
+    .replace(' ', '')
+
   let sDays = [];
 
   if(sDays.indexOf(s['Last Update']) >= 0) {
@@ -83,6 +94,9 @@ function cleanItem(d) {
 }
 
 function dataPrep(src) {
+  const supData = d3.csv(wdvp).then(w => {
+    console.log(w);
+  })
   let data = []
   src.forEach(ss => {
 

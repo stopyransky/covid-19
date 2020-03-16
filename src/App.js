@@ -40,9 +40,10 @@ function App() {
   }, [ state.selectedCountry ])
   return (
     <div className="App">
-      <select value={state.selectedCountry || 'Select country'} onChange={e => {
+      <select value={state.selectedCountry} onChange={e => {
         dispatch({ type: 'selectedCountry', value: e.target.value })
       }}>
+        <option key={-1} value={''}>Select Country</option>
         {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
       </select>
       <svg ref={svgRef} width={window.innerWidth} height={window.innerHeight}></svg>

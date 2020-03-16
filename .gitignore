@@ -5,6 +5,7 @@
 /.pnp
 .pnp.js
 
+/src/data
 # testing
 /coverage
 
@@ -23,4 +24,3 @@ yarn-debug.log*
 yarn-error.log*
 
 
-./src/data

@@ -59,6 +59,7 @@ function init(svg, data) {
     .attr('d', d => lineGen(d))
     .attr('fill', 'none')
     .attr('stroke', '#ccc')
+    .style("stroke-linecap", "round")
     .attr('stroke-width', 1)
     .on('mouseover', (d, i, n) => {
       const country = d[0]['Country/Region'];
