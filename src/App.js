@@ -40,7 +40,6 @@ function App() {
   }
   return (
     <div className="app">
-
       <div style={{
         position: w < 1024 ? 'relative' : 'absolute',
         left: w < 1024 ? null : '120px',

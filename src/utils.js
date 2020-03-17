@@ -6,12 +6,14 @@ export function getData() {
   return data.default.locations;
 }
 
-function prepData(apiData) {
+function prepData(apiData = null) {
   console.log(apiData)
   let raw = data.default.locations.filter(d => d.country_code !== 'XX');
+
   if(apiData) {
     raw = apiData;
   }
+
   console.log(raw)
   const byCountryCodeMap = group(raw, d => d.country);
 

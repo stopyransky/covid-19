@@ -10,19 +10,6 @@ html, body {
   font-family: 'Playfair Display', serif;
 }
 
-.app {
-  /* margin: auto; */
-  /* float: left; */
-  /* display: flex; */
-  /* flex-flow: column nowrap; */
-  /* justify-content: space-around; */
-  /* align-items: center; */
-  /* margin: auto; */
-  /* padding-top: 10px; */
-  /* background-image: linear-gradient(#323232, #232323); */
-}
-
-
 svg {
   line-height: 0;
 }

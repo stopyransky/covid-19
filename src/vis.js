@@ -1,10 +1,12 @@
 import * as d3 from 'd3';
 
 const dispatcher = d3.dispatch('datapointClick')
+
 let selected = '';
+
 let data;
 let svgSelection, screen;
-let main, xScale, yScale, yDomain, lineGen;
+let main, xScale, xDomain, yScale, yDomain, lineGen;
 
 const style = {
   strokeColor: '#FFC042',
@@ -49,9 +51,10 @@ function init(svg, _data) {
   main = svgSelection.append('g')
   .attr('class', 'main');
 
+  xDomain = [ new Date('2020-01-22'), new Date('2020-03-16')]
   xScale = d3.scaleTime()
     .range([screen.margin.left, screen.width])
-    .domain([ new Date('2020-01-22'), new Date('2020-03-16')]);
+    .domain(xDomain);
 
   const confirmed = data.docs.map(d => d.confirmed);
 
@@ -129,13 +132,24 @@ function drawCircleMarkers() {
     .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
     .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
     .attr('r', style.markerSize)
-    .attr('fill', style.strokeColor)
+    .attr('fill', d => getPathStroke(d))
     .attr('stroke', style.strokeColor)
     // .style("stroke-linecap", "round")
     .attr('stroke-width', style.circleStrokeWidth)
     .style('pointer-events', 'none')
 }
 
+function getPathStroke(d, isDeselected) {
+  if(!isDeselected && selected === d.country) {
+    return style.strokeColorSelected;
+  }
+  const latest = d.historyArray[d.historyArray.length-1].confirmed;
+  console.log(latest/yDomain[1])
+  const h = latest/yDomain[1];
+  const col = d3.hsl(h, 0.5, 0.5);
+  return col; //style.strokeColor;
+
+}
 function drawPaths() {
   main
   .selectAll('path')
@@ -145,14 +159,13 @@ function drawPaths() {
     .attr('class', d => d.country_code )
     .attr('d', d => lineGen(d.historyArray))
     .attr('fill', 'none')
-    .attr('stroke', style.strokeColor)
+    .attr('stroke', d => getPathStroke(d))
     .style("stroke-linecap", "round")
     .attr('stroke-width', style.strokeWidth)
     .style('pointer-events', 'none')
 }
+
 function drawInteractionPaths() {
-
-
   const g = main.append('g').attr('class', 'interactive')
   g.append('g')
   .append('text')
@@ -196,7 +209,7 @@ function drawInteractionPaths() {
     .on('mouseout', (d, i, n) => {
       if(selected !== d.country) {
         d3.select(`.${d.country_code}`)
-          .attr('stroke', style.strokeColor)
+          .attr('stroke', getPathStroke(d))
           .attr('stroke-width', style.strokeWidth)
       }
       d3.select('.label').attr('display', 'none')
@@ -208,19 +221,22 @@ function drawInteractionPaths() {
     })
 }
 
-
-
-
-
 function handleSelect(selectedCountry) {
-  const s = data.countryDocs.find((d) => d.country === selectedCountry )
-  const p = data.countryDocs.find((d) => d.country === selected )
-  p && d3.select(`path.${p.country_code}`)
-    .attr('stroke', style.strokeColor)
+  const prev = data.countryDocs.find((d) => d.country === selected )
+  const next = data.countryDocs.find((d) => d.country === selectedCountry )
+
+  if(prev) {
+    d3.select(`path.${prev.country_code}`)
+    .attr('stroke', getPathStroke(prev, true))
     .attr('stroke-width', style.strokeWidth)
-  s && d3.select(`path.${s.country_code}`)
+  }
+
+  if(next) {
+    d3.select(`path.${next.country_code}`)
     .attr('stroke', style.strokeColorSelected)
-    .attr('stroke-width', style.strokeWidthSelected)
+    .attr('stroke-width', style.strokeWidthSelected);
+  }
+
   selected = selectedCountry;
 }
 
