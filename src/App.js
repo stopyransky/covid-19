@@ -26,8 +26,6 @@ function App() {
         console.log('clicked!', country)
         dispatch({ type: 'selectedCountry', value: country})
       })
-    // const data = Utils.prepData();
-
   }, []);
 
   useEffect(() => {
@@ -36,7 +34,7 @@ function App() {
 
   const w = window.innerWidth;
   if(w < 1024) {
-    document.body.style.overflow = 'auto';
+    document.body.style.overflowY = 'auto';
   }
   return (
     <div className="app">
@@ -72,7 +70,7 @@ function App() {
         {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
       </select>
       <p style={{ zIndex: 999, margin: '10px 0px', color: vis.style.strokeColor, fontSize: '12px' }}>
-        <span>source: <a style={{
+        <span className={'display'}>source: <a style={{
           color: 'white',
         }} noreferer='true' noopener='true' target='blank' href='https://github.com/Omaroid/Covid-19-API'>Covid-19 API, based on WHO data</a></span>
         </p>
@@ -81,6 +79,16 @@ function App() {
         ref={svgRef}
         width={Math.min(1024, window.innerWidth)}
         height={window.innerHeight}>
+        <filter id="white-glow" x="-5000%" y="-5000%" width="10000%" height="10000%">
+          <feFlood result="flood" flood-color="#ffffff" flood-opacity="1"></feFlood>
+          <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"></feComposite>
+          <feMorphology in="mask" result="dilated" operator="dilate" radius="1.0"></feMorphology>
+          <feGaussianBlur in="dilated" result="blurred" stdDeviation="5"></feGaussianBlur>
+          <feMerge>
+              <feMergeNode in="blurred"></feMergeNode>
+              <feMergeNode in="SourceGraphic"></feMergeNode>
+          </feMerge>
+        </filter>
       </svg>
     </div>
   );

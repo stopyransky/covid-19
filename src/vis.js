@@ -1,27 +1,31 @@
 import * as d3 from 'd3';
 
 const dispatcher = d3.dispatch('datapointClick')
-
+const format = d3.timeFormat('%d %b');
 let selected = '';
 
 let data;
 let svgSelection, screen;
 let main, xScale, xDomain, yScale, yDomain, lineGen;
 
+d3.selection.prototype.moveToFront = function() { return this.each(function() { this.parentNode.appendChild(this); }); };
+
 const style = {
   strokeColor: '#FFC042',
   strokeWidth: 1,
   strokeColorSelected: 'white',
   strokeWidthSelected: 5,
-  strokeWidthHover: 3,
-  strokeColorHover: '#EFD28B',
+  strokeWidthHover: 2,
+  strokeColorHover: 'white',
   textColor: 'white',
   tickTextColor: 'white',
   tickLineColor: '#aaa',
+  lineStrokeStyle: "1, 1",
   tickLineStyle: '0.5, 5',
   tickTextSize: '0.8rem',
   strokeWidthInteractive: 8,
   markerSize: 2,
+  selectedMarkerSize: 6,
   circleStrokeWidth: 0,
 }
 
@@ -35,11 +39,12 @@ function init(svg, _data) {
   const w = svgSelection.attr('width');
   const h = svgSelection.attr('height');
 
+
   const margin = {
     top: 50,
     bottom: 50,
     left: 20,
-    right: w < 1024 ? 40: 150,
+    right: w < 1024 ? 50: 150,
   }
   screen = {
     w, h,
@@ -49,7 +54,7 @@ function init(svg, _data) {
   }
 
   main = svgSelection.append('g')
-  .attr('class', 'main');
+    .attr('class', 'main');
 
   xDomain = [ new Date('2020-01-22'), new Date('2020-03-16')]
   xScale = d3.scaleTime()
@@ -72,15 +77,27 @@ function init(svg, _data) {
   drawAxes()
   drawCircleMarkers();
   drawPaths()
-  drawInteractionPaths()
+  drawInteractionPaths();
+
+  main.append('g')
+  .append('text')
+  .attr('class', 'label')
+  .style('font-family', 'Playfair Display')
+  .attr('font-weight', 'bold')
+  .attr('display', 'none')
+  .attr('text-anchor', screen.w < 1024 ? 'end' : 'start')
+  .attr('font-size', '16px')
+  .attr('x', screen.w < 1024 ? screen.width - 8 : screen.width + 8)
+  .attr('fill', style.textColor)
+  .style('z-index', 100)
 }
 
 function drawAxes() {
   const xAxis = d3.axisBottom(xScale);
 
-  const defaultXTicks = xScale.ticks();
-
-  xAxis.tickValues(screen.w < 1024 ? [defaultXTicks[0], defaultXTicks[defaultXTicks.length-1]] : defaultXTicks)
+  const [ _, ...rest] = xScale.ticks();
+  rest.pop();
+  xAxis.tickValues(screen.w < 1024 ? xDomain : [...rest, ...xDomain]).tickFormat(format)
   const xAxisSel = main.append('g')
     .attr('class', 'x-axis')
     .attr('transform', `translate(0, ${screen.height + screen.margin.top})`)
@@ -128,7 +145,7 @@ function drawCircleMarkers() {
   .data(data.countryDocs, d => d.country_code)
   .enter()
   .append('circle')
-    .attr('class', 'end-circle' )
+    .attr('class', d => `${d.country_code}` )
     .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
     .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
     .attr('r', style.markerSize)
@@ -144,9 +161,9 @@ function getPathStroke(d, isDeselected) {
     return style.strokeColorSelected;
   }
   const latest = d.historyArray[d.historyArray.length-1].confirmed;
-  console.log(latest/yDomain[1])
-  const h = latest/yDomain[1];
-  const col = d3.hsl(h, 0.5, 0.5);
+  // console.log()
+  const s = yScale(latest)/yScale(yDomain[0]);
+  const col = d3.hsl(0, 0.5 + s * 0.2 , 0.5);
   return col; //style.strokeColor;
 
 }
@@ -159,20 +176,16 @@ function drawPaths() {
     .attr('class', d => d.country_code )
     .attr('d', d => lineGen(d.historyArray))
     .attr('fill', 'none')
+    // .attr('filter', 'url(#white-glow)')
     .attr('stroke', d => getPathStroke(d))
     .style("stroke-linecap", "round")
+    .attr('stroke-dasharray',style.lineStrokeStyle)
     .attr('stroke-width', style.strokeWidth)
     .style('pointer-events', 'none')
 }
 
 function drawInteractionPaths() {
   const g = main.append('g').attr('class', 'interactive')
-  g.append('g')
-  .append('text')
-  .attr('class', 'label')
-  .style('font-family', 'Playfair Display')
-  .attr('font-weight', 'bold')
-  .attr('display', 'none');
 
   g.selectAll('path')
   .data(data.countryDocs, d => d.country_code)
@@ -187,37 +200,32 @@ function drawInteractionPaths() {
     .on('mouseover', (d, i, n) => {
       // const country = d.country;
       if(selected !== d.country) {
-        d3.select(`.${d.country_code}`)
+        d3.select(`path.${d.country_code}`)
           .attr('stroke', style.strokeColorHover)
           .attr('stroke-width', style.strokeWidthHover)
       }
 
       const lastValue = d.historyArray[d.historyArray.length-1].confirmed;
 
-      const w = svgSelection.attr('width');
       d3.select('.label')
       .attr('display', null)
-      .attr('text-anchor', w < 1024 ? 'end' : 'start')
-      .attr('font-size', '16px')
-
-      .attr('x', w < 1024 ? screen.width - 8 : screen.width + 8)
-      .attr('y', yScale(lastValue) - 4)
-      .attr('fill', style.textColor)
-      .text(`${d.country}, ${lastValue}`)
-      .style('z-index', 100);
+      .attr('y', yScale(lastValue) - 6)
+      .text(`${d.country}, ${lastValue}`).moveToFront()
     })
     .on('mouseout', (d, i, n) => {
       if(selected !== d.country) {
-        d3.select(`.${d.country_code}`)
+        d3.select(`path.${d.country_code}`)
           .attr('stroke', getPathStroke(d))
           .attr('stroke-width', style.strokeWidth)
+        d3.select('.label').attr('display', 'none')
       }
-      d3.select('.label').attr('display', 'none')
+
     })
     .on('mouseup', (d, i, n) => {
-      // const country = d.country;
+
       handleSelect(d.country_code);
-      dispatcher.call('datapointClick', null, d.country)
+
+      dispatcher.call('datapointClick', null, d.country);
     })
 }
 
@@ -226,15 +234,33 @@ function handleSelect(selectedCountry) {
   const next = data.countryDocs.find((d) => d.country === selectedCountry )
 
   if(prev) {
+    const color = getPathStroke(prev, true);
     d3.select(`path.${prev.country_code}`)
-    .attr('stroke', getPathStroke(prev, true))
+    .attr('stroke', color)
+    .attr('filter', null)
     .attr('stroke-width', style.strokeWidth)
+    d3.select(`circle.${prev.country_code}`)
+      .attr('r', style.markerSize)
+      .attr('fill', color )
+      .attr('filter', null)
   }
 
   if(next) {
+    const lastValue = next.historyArray[next.historyArray.length-1].confirmed
     d3.select(`path.${next.country_code}`)
     .attr('stroke', style.strokeColorSelected)
-    .attr('stroke-width', style.strokeWidthSelected);
+    .attr('filter', 'url(#white-glow)')
+    .attr('stroke-width', style.strokeWidthSelected).moveToFront();
+
+    d3.select(`circle.${next.country_code}`)
+      .attr('r', style.selectedMarkerSize)
+      .attr('fill', style.strokeColorSelected)
+      .attr('filter', 'url(#white-glow)').moveToFront()
+
+    d3.select('.label')
+      .attr('display', null)
+      .attr('y', yScale(lastValue) - 6)
+      .text(`${next.country}, ${lastValue}`).moveToFront()
   }
 
   selected = selectedCountry;
