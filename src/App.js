@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useReducer } from 'react';
-import * as d3 from 'd3';
-
 import './App.css';
 import Utils from './utils';
 import vis from './vis';
+import * as d3 from 'd3';
 
 const defaultState = { countries: [], selectedCountry: '' }
 
@@ -21,14 +20,14 @@ function App() {
   const [ state, dispatch ] = useReducer(reducer, defaultState);
 
   useEffect(() => {
-    Promise.all(Utils.files.map(file => d3.csv(file)))
-    .then(function(src) {
-      const data = Utils.dataPrep(src);
-      vis.init(svgRef.current, data);
-      dispatch({ type: 'countries', value : data.countries})
-    }).catch(function(err) {
-        // handle error here
-    });
+    console.log()
+    const data = Utils.prepData();
+    vis.init(svgRef.current, data);
+    dispatch({ type: 'countries', value : data.countries})
+    // }).catch(function(err) {
+    //   console.log(err)
+    //     // handle error here
+    // });
     vis.dispatcher.on('datapointClick', (country) => {
       console.log('clicked!', country)
       dispatch({ type: 'selectedCountry', value: country})
