@@ -1,15 +1,17 @@
-import * as d3 from 'd3';
-import { group, rollup } from 'd3-array';
-import * as data from './data.json';
 
-const format = d3.timeFormat('%Y-%m-%d');
+import { group } from 'd3-array';
+import * as data from './data.json';
 
 export function getData() {
   return data.default.locations;
 }
 
-function prepData() {
+function prepData(apiData) {
+  console.log(apiData)
   let raw = data.default.locations.filter(d => d.country_code !== 'XX');
+  if(apiData) {
+    raw = apiData;
+  }
   console.log(raw)
   const byCountryCodeMap = group(raw, d => d.country);
 
@@ -48,7 +50,7 @@ function mergeByCountry(map) {
     const { history, country, country_code } = arr[0];
     const doc = { country, country_code };
     if(arr.length > 1) {
-      // aggregate all items' history into one history object
+
       doc.history = concatenateHistory(arr)
 
     } else {
@@ -56,9 +58,12 @@ function mergeByCountry(map) {
       doc.history = history;
     }
 
+
     let h = Object.keys(doc.history)
-      .map(k => ({ date: new Date(k), confirmed: doc.history[k]}))
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
+
+      .map(k => ({ key: k, date: new Date(k), confirmed: doc.history[k]}))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
 
     doc.historyArray = h;
     docs.push(doc);
