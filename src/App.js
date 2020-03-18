@@ -70,16 +70,15 @@ function App() {
         {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
       </select>
       <div style={{display: 'flex'}}>
-        <p className={'display'} style={{ zIndex: 999, margin: '5px 5px', color: vis.style.strokeColor, fontSize: '12px' }}>
-          <a style={{
-            color: 'white',
-          }} noreferer='true' noopener='true' target='blank' href='https://github.com/Omaroid/Covid-19-API'>source</a>
+        <p className={'display'} style={{ zIndex: 999, margin: '5px 5px 0px 0px', color: vis.style.strokeColor, fontSize: '12px' }}>
+        <a style={{
+            color: '#aaa',
+          }} noreferer='true' noopener='true' target='blank' href='https://github.com/Omaroid/Covid-19-API'>data source</a>
 
           </p>
-        <p className={'display'} style={{ zIndex: 999, margin: '5px 5px', color: vis.style.strokeColor, fontSize: '12px' }}>
-
+        <p className={'display'} style={{ zIndex: 999,  margin: '5px 0px 0px 5px', color: vis.style.strokeColor, fontSize: '12px' }}>
           <a style={{
-            color: 'white',
+            color: '#aaa',
           }} noreferer='true' noopener='true' target='blank' href='https://twitter.com/stopyransky'>author</a>
 
         </p>

@@ -282,6 +282,7 @@ function handleSelect(selectedCountry) {
     d3.select(`circle.${next.country_code}`)
       .attr('r', style.selectedMarkerSize)
       .attr('fill', style.strokeColorSelected)
+      .attr('stroke', style.strokeColorSelected)
 
     d3.selectAll(`.${next.country_code}`)
       .attr('filter', 'url(#white-glow)')
