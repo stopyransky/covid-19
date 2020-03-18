@@ -7,7 +7,6 @@ export function getData() {
 }
 
 function prepData(apiData = null) {
-  console.log(apiData)
   let raw = data.default.locations
     .filter(d => d.country_code !== 'XX');
 

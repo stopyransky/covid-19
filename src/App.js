@@ -23,7 +23,6 @@ function App() {
       vis.init(svgRef.current, data);
       dispatch({ type: 'countries', value : data.countries})
       vis.dispatcher.on('datapointClick', (country) => {
-        console.log('clicked!', country)
         dispatch({ type: 'selectedCountry', value: country})
       })
   }, []);

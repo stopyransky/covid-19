@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import { THRESHOLD } from './App';
+import { scryRenderedComponentsWithType } from 'react-dom/test-utils';
 
 const dispatcher = d3.dispatch('datapointClick')
 const format = d3.timeFormat('%d %b');
@@ -27,7 +28,7 @@ const style = {
   lineStrokeStyle: "1, 1",
   tickLineStyle: '0.5, 5',
   tickTextSize: '1.0rem',
-  strokeWidthInteractive: 6,
+  strokeWidthInteractive: 4,
   markerSize: 2,
   selectedMarkerSize: 6,
   circleStrokeWidth: 0,
@@ -48,7 +49,7 @@ function init(svg, _data) {
     top: 50,
     bottom: 50,
     left: 30,
-    right: w < THRESHOLD ? 50: 150,
+    right: w < THRESHOLD ? 30: 150,
   }
   screen = {
     w, h,
@@ -118,14 +119,14 @@ function drawAxes() {
     .select('line')
     .attr('stroke', style.tickLineColor);
 
-  const yAxis = d3.axisRight(yScale).tickValues([
-    5, 50, 500, 5000, 50000,
-  ])
+
+  if(screen.w >= THRESHOLD) {
+    const yAxis = d3.axisRight(yScale).tickValues([ 5, 50, 500, 5000, 50000 ])
 
     const yAxiSel = main.append('g')
-    .attr('class', 'y-axis')
-    .attr('transform', `translate(${screen.width}, 0)`)
-    .call(yAxis)
+      .attr('class', 'y-axis')
+      .attr('transform', `translate(${screen.width}, 0)`)
+      .call(yAxis)
 
     yAxiSel.selectAll('.tick')
       .select('text')
@@ -139,8 +140,7 @@ function drawAxes() {
       .attr('x2', -screen.width + screen.margin.left)
       .attr('stroke-dasharray', style.tickLineStyle)
       .attr('stroke', style.tickLineColor);
-
-
+  }
     d3.selectAll('.domain').remove();
 
 }
@@ -167,10 +167,10 @@ function getPathStroke(d, isDeselected) {
     return style.strokeColorSelected;
   }
   const latest = d.historyArray[d.historyArray.length-1].confirmed;
-  // console.log()
+
   const s = yScale(latest)/yScale(yDomain[0]);
   const col = d3.hsl(0, 0.5 + s * 0.2 , 0.5);
-  return col; //style.strokeColor;
+  return col;
 
 }
 function drawPaths() {
@@ -184,7 +184,6 @@ function drawPaths() {
     .attr('fill', 'none')
     .attr('stroke', d => getPathStroke(d))
     .style("stroke-linecap", "round")
-    .attr('stroke-dasharray',style.lineStrokeStyle)
     .attr('stroke-width', style.strokeWidth)
     .style('pointer-events', 'none')
 }
@@ -200,7 +199,6 @@ function drawInteractionPaths() {
     .attr('d', d => lineGen(d.historyArray))
     .attr('fill', 'none')
     .attr('stroke', 'transparent')
-    .style("stroke-linecap", "round")
     .attr('stroke-width', style.strokeWidthInteractive)
     .on('mouseover', (d, i, n) => {
       const lastValue = d.historyArray[d.historyArray.length-1].confirmed;
