@@ -3,7 +3,7 @@ import './App.css';
 import Utils from './utils';
 import vis from './vis';
 
-export const THRESHOLD = 1024;
+export const THRESHOLD = 1200;
 const defaultState = { countries: [], selectedCountry: '' }
 function reducer(state, action) {
   switch(action.type) {
@@ -24,9 +24,22 @@ function App() {
       dispatch({ type: 'countries', value : data.countries})
       vis.dispatcher.on('datapointClick', (country) => {
         dispatch({ type: 'selectedCountry', value: country})
-      })
+      });
+
+
+
   }, []);
 
+  useEffect(() => {
+    function onResize() {
+      window.location.reload()
+    }
+
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener(onResize)
+    }
+  }, [])
   useEffect(() => {
     state.selectedCountry && vis.handleSelect(state.selectedCountry)
   }, [ state.selectedCountry ]);
@@ -36,11 +49,20 @@ function App() {
     document.body.style.overflowY = 'auto';
   }
   return (
-    <div className="app">
+    <div  style= {{
+       display: 'flex',
+      justifyContent: 'center',
+
+    }}>
+      <div style={{
+        position: 'relative',
+        maxWidth: 1400,
+
+      }}>
       <div style={{
         position: w < THRESHOLD ? 'relative' : 'absolute',
-        left: w < THRESHOLD ? null : '120px',
-        top: w < THRESHOLD ? null : '220px',
+        left: w < THRESHOLD ? null : '170px',
+        top: w < THRESHOLD ? null : '240px',
         margin: w < THRESHOLD ? '10px': null,
       }}>
         <h1 className={'display'} style={{
@@ -98,6 +120,7 @@ function App() {
           </feMerge>
         </filter>
       </svg>
+      </div>
     </div>
   );
 }

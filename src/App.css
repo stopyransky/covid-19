@@ -16,20 +16,3 @@ html, body {
 svg {
   line-height: 0;
 }
-
-a:link {
-  color: 'white';
-  text-decoration: none;
-}
-a:visited {
-  color: 'white';
-  text-decoration: none;
-}
-a:hover{
-  color: 'white';
-}
-
- a:active{
-  color: 'white';
-  text-decoration: none;
-}

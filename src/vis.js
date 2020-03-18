@@ -38,8 +38,6 @@ function init(svg, _data) {
 
   data = _data;
 
-
-
   svgSelection = d3.select(svg);
   const w = svgSelection.attr('width');
   const h = svgSelection.attr('height');
@@ -59,7 +57,8 @@ function init(svg, _data) {
   }
 
   main = svgSelection.append('g')
-    .attr('class', 'main');
+    .attr('class', 'main')
+    .attr('transform', `translate(20, 0)`);
 
   xDomain = [ new Date('2020-01-22'), new Date('2020-03-17')]
   xScale = d3.scaleTime()
@@ -88,7 +87,7 @@ function init(svg, _data) {
   .append('text')
   .attr('class', 'label')
   .style('font-family', style.fontFamily)
-  .attr('font-weight', 'bold')
+  // .attr('font-weight', 'bold')
   .attr('display', 'none')
   .attr('text-anchor', w < THRESHOLD ? 'end' : 'start')
   .attr('font-size', '16px')
@@ -295,8 +294,28 @@ function handleSelect(selectedCountry) {
   selected = selectedCountry;
 }
 
+function resize() {
+  const w = svgSelection.attr('width');
+  const h = svgSelection.attr('height');
+
+
+  const margin = {
+    top: 50,
+    bottom: 50,
+    left: 30,
+    right: w < THRESHOLD ? 30: 150,
+  }
+  screen = {
+    w, h,
+    width: w - margin.left - margin.right,
+    height: h - margin.top - margin.bottom,
+    margin
+  }
+}
+
 const vis = {
   init,
+  resize,
   handleSelect,
   style,
   dispatcher
