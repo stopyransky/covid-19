@@ -8,13 +8,9 @@ export function getData() {
 
 function prepData(apiData = null) {
   console.log(apiData)
-  let raw = data.default.locations.filter(d => d.country_code !== 'XX');
+  let raw = data.default.locations
+    .filter(d => d.country_code !== 'XX');
 
-  if(apiData) {
-    raw = apiData;
-  }
-
-  console.log(raw)
   const byCountryCodeMap = group(raw, d => d.country);
 
   const countryDocs = mergeByCountry(byCountryCodeMap)
@@ -62,7 +58,7 @@ function mergeByCountry(map) {
 
 
     let h = Object.keys(doc.history)
-
+      // .filter(k => doc.history[k] !== 0)
       .map(k => ({ key: k, date: new Date(k), confirmed: doc.history[k]}))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 

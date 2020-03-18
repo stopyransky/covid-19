@@ -3,8 +3,8 @@ import './App.css';
 import Utils from './utils';
 import vis from './vis';
 
+export const THRESHOLD = 1024;
 const defaultState = { countries: [], selectedCountry: '' }
-
 function reducer(state, action) {
   switch(action.type) {
     case 'countries': return { ...state, countries: action.value };
@@ -33,16 +33,16 @@ function App() {
   }, [ state.selectedCountry ]);
 
   const w = window.innerWidth;
-  if(w < 1024) {
+  if(w < THRESHOLD) {
     document.body.style.overflowY = 'auto';
   }
   return (
     <div className="app">
       <div style={{
-        position: w < 1024 ? 'relative' : 'absolute',
-        left: w < 1024 ? null : '120px',
-        top: w < 1024 ? null : '220px',
-        margin: w < 1024 ? '10px': null,
+        position: w < THRESHOLD ? 'relative' : 'absolute',
+        left: w < THRESHOLD ? null : '120px',
+        top: w < THRESHOLD ? null : '220px',
+        margin: w < THRESHOLD ? '10px': null,
       }}>
         <h1 className={'display'} style={{
           fontWeight: 900,
@@ -60,27 +60,37 @@ function App() {
           fontSize: '12px',
           margin: '10px 0px',
           color: vis.style.strokeColor
-        }}>(select or hover over a line to see details)</h3>
+        }}>Select below or hover over a line to see details.</h3>
       <select
-        style={{ color: w < 1024 ? 'white': 'black', width: '200px', marginBottom: '5px'}}
+        style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
         value={state.selectedCountry} onChange={e => {
           dispatch({ type: 'selectedCountry', value: e.target.value })
         }}>
         <option key={-1} value={''}>Select Country</option>
         {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
       </select>
-      <p style={{ zIndex: 999, margin: '10px 0px', color: vis.style.strokeColor, fontSize: '12px' }}>
-        <span className={'display'}>source: <a style={{
-          color: 'white',
-        }} noreferer='true' noopener='true' target='blank' href='https://github.com/Omaroid/Covid-19-API'>Covid-19 API, based on WHO data</a></span>
+      <div style={{display: 'flex'}}>
+        <p className={'display'} style={{ zIndex: 999, margin: '5px 5px', color: vis.style.strokeColor, fontSize: '12px' }}>
+          <a style={{
+            color: 'white',
+          }} noreferer='true' noopener='true' target='blank' href='https://github.com/Omaroid/Covid-19-API'>source</a>
+
+          </p>
+        <p className={'display'} style={{ zIndex: 999, margin: '5px 5px', color: vis.style.strokeColor, fontSize: '12px' }}>
+
+          <a style={{
+            color: 'white',
+          }} noreferer='true' noopener='true' target='blank' href='https://twitter.com/stopyransky'>author</a>
+
         </p>
+      </div>
       </div>
       <svg
         ref={svgRef}
-        width={Math.min(1024, window.innerWidth)}
-        height={window.innerHeight}>
+        width={Math.min(THRESHOLD, window.innerWidth)}
+        height={window.innerHeight - 10}>
         <filter id="white-glow" x="-5000%" y="-5000%" width="10000%" height="10000%">
-          <feFlood result="flood" flood-color="#ffffff" flood-opacity="1"></feFlood>
+          <feFlood result="flood" floodColor="#ffffff" floodOpacity="1"></feFlood>
           <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"></feComposite>
           <feMorphology in="mask" result="dilated" operator="dilate" radius="1.0"></feMorphology>
           <feGaussianBlur in="dilated" result="blurred" stdDeviation="5"></feGaussianBlur>
