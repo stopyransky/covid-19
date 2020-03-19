@@ -1,13 +1,12 @@
 
 import { group } from 'd3-array';
 import * as data from './data.json';
+import * as allData from './data.all.json';
 
-export function getData() {
-  return data.default.locations;
-}
 
-function prepData(apiData = null) {
-  let raw = data.default.locations
+function prepData(caseType) {
+  // let raw = data.default.locations
+  let raw = allData.default.confirmed.locations
     .filter(d => d.country_code !== 'XX');
 
   const byCountryCodeMap = group(raw, d => d.country);
@@ -87,6 +86,5 @@ function concatenateHistory(values) {
 
 
 export default {
-  getData,
   prepData
 }

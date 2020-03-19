@@ -4,30 +4,63 @@ import Utils from './utils';
 import vis from './vis';
 
 export const THRESHOLD = 1200;
-const defaultState = { countries: [], selectedCountry: '' }
+
+function Radio ({ type, value, onChange, isChecked }) {
+  return (
+    <div style={{ color: 'white', marginRight: '8px' }}>
+      <input
+        type="radio"
+        id={value}
+        name={type}
+        value={value}
+        checked={isChecked}
+        onChange={e => onChange(e.target.value)}
+      />
+      <label
+        className={'display'}
+        style={{ marginLeft: '4px', color: isChecked ? vis.style.strokeColor: 'white' }}
+        htmlFor={value}>{value}</label>
+    </div>
+  )
+}
+
+function DatasetSelection({ onChange, selected })  {
+  return (
+    <div style={{ display: 'flex' }}>
+      <Radio type="caseType" value="confirmed" isChecked={selected === 'confirmed'} onChange={onChange}/>
+      <Radio type="caseType" value="deaths" isChecked={selected === 'deaths'} onChange={onChange}/>
+      <Radio type="caseType" value="recovered" isChecked={selected === 'recovered'} onChange={onChange} />
+    </div>
+  )
+}
+
+const defaultState = { countries: [], selectedCountry: '', caseType: 'confirmed' }
+
 function reducer(state, action) {
   switch(action.type) {
     case 'countries': return { ...state, countries: action.value };
     case 'selectedCountry' : {
       return { ...state, selectedCountry: action.value};
     }
+    case 'caseType': {
+      return { ...state, caseType: action.value }
+    }
     default: return state;
   }
 }
+
 function App() {
   const svgRef = useRef(null);
   const [ state, dispatch ] = useReducer(reducer, defaultState);
+  const setState = (type, value) => dispatch({ type, value });
 
   useEffect(() => {
       let data = Utils.prepData();
       vis.init(svgRef.current, data);
-      dispatch({ type: 'countries', value : data.countries})
+      setState('countries', data.countries)
       vis.dispatcher.on('datapointClick', (country) => {
-        dispatch({ type: 'selectedCountry', value: country})
+        setState('selectedCountry', country)
       });
-
-
-
   }, []);
 
   useEffect(() => {
@@ -39,11 +72,15 @@ function App() {
     return () => {
       window.removeEventListener(onResize)
     }
-  }, [])
+  }, []);
+
   useEffect(() => {
-    state.selectedCountry && vis.handleSelect(state.selectedCountry)
+    state.selectedCountry && vis.handleCountrySelect(state.selectedCountry)
   }, [ state.selectedCountry ]);
 
+  useEffect(() => {
+    vis.handleCaseType(state.caseType)
+  }, [state.caseType])
   const w = window.innerWidth;
   if(w < THRESHOLD) {
     document.body.style.overflowY = 'auto';
@@ -75,7 +112,8 @@ function App() {
           fontWeight: 700,
           margin: '10px 0px',
           color: vis.style.strokeColor
-        }}>Confirmed coronavirus cases per country over time.</h3>
+        }}>Coronavirus cases per country over time.</h3>
+        {/* <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/> */}
         <h3 className={'display'} style={{
           fontWeight: 700,
           fontSize: '12px',
@@ -85,7 +123,7 @@ function App() {
       <select
         style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
         value={state.selectedCountry} onChange={e => {
-          dispatch({ type: 'selectedCountry', value: e.target.value })
+          setState('selectedCountry', e.target.value)
         }}>
         <option key={-1} value={''}>Select Country</option>
         {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}

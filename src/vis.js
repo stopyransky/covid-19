@@ -1,14 +1,16 @@
 import * as d3 from 'd3';
 import { THRESHOLD } from './App';
-import { scryRenderedComponentsWithType } from 'react-dom/test-utils';
 
 const dispatcher = d3.dispatch('datapointClick')
 const format = d3.timeFormat('%d %b');
+
+const xDomain = [ new Date('2020-01-22'), new Date('2020-03-18')]
+
 let selected = '';
 
 let data;
 let svgSelection, screen;
-let main, xScale, xDomain, yScale, yDomain, lineGen;
+let main, xScale, yScale, yDomain, lineGen;
 
 d3.selection.prototype.moveToFront = function() {
   return this.each(function() { this.parentNode.appendChild(this); });
@@ -60,7 +62,6 @@ function init(svg, _data) {
     .attr('class', 'main')
     .attr('transform', `translate(20, 0)`);
 
-  xDomain = [ new Date('2020-01-22'), new Date('2020-03-17')]
   xScale = d3.scaleTime()
     .range([screen.margin.left, screen.width])
     .domain(xDomain);
@@ -246,13 +247,13 @@ function drawInteractionPaths() {
     })
     .on('mouseup', (d, i, n) => {
 
-      handleSelect(d.country_code);
+      handleCountrySelect(d.country_code);
 
       dispatcher.call('datapointClick', null, d.country);
     })
 }
 
-function handleSelect(selectedCountry) {
+function handleCountrySelect(selectedCountry) {
   const prev = data.countryDocs.find((d) => d.country === selected )
   const next = data.countryDocs.find((d) => d.country === selectedCountry )
 
@@ -294,29 +295,15 @@ function handleSelect(selectedCountry) {
   selected = selectedCountry;
 }
 
-function resize() {
-  const w = svgSelection.attr('width');
-  const h = svgSelection.attr('height');
+function handleCaseType(caseType) {
 
-
-  const margin = {
-    top: 50,
-    bottom: 50,
-    left: 30,
-    right: w < THRESHOLD ? 30: 150,
-  }
-  screen = {
-    w, h,
-    width: w - margin.left - margin.right,
-    height: h - margin.top - margin.bottom,
-    margin
-  }
 }
 
 const vis = {
   init,
-  resize,
-  handleSelect,
+  // resize,
+  handleCountrySelect,
+  handleCaseType,
   style,
   dispatcher
 }
