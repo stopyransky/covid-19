@@ -8,14 +8,23 @@ const xDomain = [ new Date('2020-01-22'), new Date('2020-03-18')]
 
 let selected = '';
 
-let data;
+let data, caseType;
 let svgSelection, screen;
-let main, xScale, yScale, yDomain, lineGen;
+let main, xScale, yScale, yDomain, lineGen, xAxisSel, yAxisSel;
+let circleMarkers, paths, interactivePaths, label;
+
+const t = d3.transition().duration(1000).ease(d3.easeBack)
 
 d3.selection.prototype.moveToFront = function() {
   return this.each(function() { this.parentNode.appendChild(this); });
 };
 
+const ticks = {
+  confirmed: [ 5, 50, 500, 5000, 50000 ],
+  deaths: [ 5, 50, 500, 3000 ],
+  recovered: [ 5, 50, 500, 5000, 50000 ],
+
+}
 const style = {
   fontFamily: 'Playfair Display',
   strokeColor: '#FFC042',
@@ -36,14 +45,13 @@ const style = {
   circleStrokeWidth: 0,
 }
 
-function init(svg, _data) {
-
+function init(svg, _data, _caseType) {
   data = _data;
+  caseType = _caseType;
 
   svgSelection = d3.select(svg);
   const w = svgSelection.attr('width');
   const h = svgSelection.attr('height');
-
 
   const margin = {
     top: 50,
@@ -51,6 +59,7 @@ function init(svg, _data) {
     left: 30,
     right: w < THRESHOLD ? 30: 150,
   }
+
   screen = {
     w, h,
     width: w - margin.left - margin.right,
@@ -62,6 +71,21 @@ function init(svg, _data) {
     .attr('class', 'main')
     .attr('transform', `translate(20, 0)`);
 
+  xAxisSel = main.append('g')
+    .attr('class', 'x-axis')
+
+  yAxisSel = main.append('g')
+    .attr('class', 'y-axis');
+
+  makeScales();
+  makeAxes()
+  makeCircleMarkers();
+  makePaths()
+  makeInteractionPaths();
+  makeLabel();
+}
+
+function makeScales() {
   xScale = d3.scaleTime()
     .range([screen.margin.left, screen.width])
     .domain(xDomain);
@@ -71,46 +95,42 @@ function init(svg, _data) {
   yDomain = d3.extent(confirmed);
 
   yScale = d3.scaleSymlog()
-    .range([screen.height+screen.margin.top, screen.margin.top])
+    .range([screen.height + screen.margin.top, screen.margin.top])
     .domain(yDomain)
 
   lineGen = d3.line()
     .curve(d3.curveMonotoneX)
     .x(d => xScale(new Date(d.date)))
     .y(d => yScale(+d.confirmed))
-
-  drawAxes()
-  drawCircleMarkers();
-  drawPaths()
-  drawInteractionPaths();
-
-  main.append('g')
-  .append('text')
-  .attr('class', 'label')
-  .style('font-family', style.fontFamily)
-  // .attr('font-weight', 'bold')
-  .attr('display', 'none')
-  .attr('text-anchor', w < THRESHOLD ? 'end' : 'start')
-  .attr('font-size', '16px')
-  .attr('x', w < THRESHOLD ? screen.width - 8 : screen.width + 8)
-  .attr('fill', style.textColor)
-  .style('z-index', 100)
 }
 
-function drawAxes() {
-  const xAxis = d3.axisBottom(xScale);
-
+function getXTicks() {
   const [ _, ...rest] = xScale.ticks();
   rest.pop();
-  xAxis
-    .tickPadding(8)
-    .tickValues(screen.w < THRESHOLD ? xDomain : [...rest, ...xDomain]).tickFormat(format)
-  const xAxisSel = main.append('g')
-    .attr('class', 'x-axis')
-    .attr('transform', `translate(0, ${screen.height + screen.margin.top})`)
-    .call(xAxis);
+  return screen.w < THRESHOLD ? xDomain : [...rest, ...xDomain];
+}
 
-  xAxisSel.selectAll('.tick').select('text')
+function getXAxis() {
+  const xAxis = d3.axisBottom(xScale)
+    .tickPadding(8)
+    .tickValues(getXTicks())
+    .tickFormat(format)
+  return xAxis;
+}
+
+function getYAxis(){
+  return d3.axisRight(yScale)
+    .tickValues(ticks[caseType])
+}
+
+function makeAxes() {
+
+  xAxisSel
+    .attr('transform', `translate(0, ${screen.height + screen.margin.top})`)
+    .call(getXAxis());
+
+  xAxisSel.selectAll('.tick')
+    .select('text')
     .attr('fill', style.tickTextColor)
     .style('font-size', style.tickTextSize)
     .style('font-family', style.fontFamily);
@@ -119,35 +139,35 @@ function drawAxes() {
     .select('line')
     .attr('stroke', style.tickLineColor);
 
-
   if(screen.w >= THRESHOLD) {
-    const yAxis = d3.axisRight(yScale).tickValues([ 5, 50, 500, 5000, 50000 ])
 
-    const yAxiSel = main.append('g')
-      .attr('class', 'y-axis')
+    yAxisSel
       .attr('transform', `translate(${screen.width}, 0)`)
-      .call(yAxis)
+      .transition(t)
+      .call(getYAxis())
 
-    yAxiSel.selectAll('.tick')
+    yAxisSel.selectAll('.tick')
       .select('text')
       .attr('fill', style.tickTextColor)
       .style('font-size', style.tickTextSize)
       .attr('dy', 2)
       .style('font-family', style.fontFamily);
-    yAxiSel.selectAll('.tick')
+
+    yAxisSel.selectAll('.tick')
       .select('line')
       .attr('x1', 0)
       .attr('x2', -screen.width + screen.margin.left)
       .attr('stroke-dasharray', style.tickLineStyle)
       .attr('stroke', style.tickLineColor);
   }
-    d3.selectAll('.domain').remove();
+
+  d3.selectAll('.domain').remove();
 
 }
 
-function drawCircleMarkers() {
+function makeCircleMarkers() {
 
-  main
+  circleMarkers = main
   .selectAll('circle')
   .data(data.countryDocs, d => d.country_code)
   .enter()
@@ -156,25 +176,36 @@ function drawCircleMarkers() {
     .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
     .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
     .attr('r', style.markerSize)
-    .attr('fill', d => getPathStroke(d))
+    .attr('fill', d => getPathColor(d))
     .attr('stroke', style.strokeColor)
     .attr('stroke-width', style.circleStrokeWidth)
     .style('pointer-events', 'none')
 }
 
-function getPathStroke(d, isDeselected) {
+function getPathColor(d, isDeselected) {
   if(!isDeselected && selected === d.country) {
     return style.strokeColorSelected;
   }
   const latest = d.historyArray[d.historyArray.length-1].confirmed;
 
   const s = yScale(latest)/yScale(yDomain[0]);
-  const col = d3.hsl(0, 0.5 + s * 0.2 , 0.5);
+  let h = 0;
+  let l = 0.5
+  if(caseType === 'deaths') {
+    h = 300;
+    l = 0.3;
+  }
+  if(caseType === 'recovered') {
+    h = 120;
+    l = 0.3
+  }
+  const col = d3.hsl(h, 0.4 + s * 0.3 , l);
   return col;
 
 }
-function drawPaths() {
-  main
+
+function makePaths() {
+  paths = main
   .selectAll('path')
   .data(data.countryDocs, d => d.country_code)
   .enter()
@@ -182,16 +213,16 @@ function drawPaths() {
     .attr('class', d => d.country_code )
     .attr('d', d => lineGen(d.historyArray))
     .attr('fill', 'none')
-    .attr('stroke', d => getPathStroke(d))
+    .attr('stroke', d => getPathColor(d))
     .style("stroke-linecap", "round")
     .attr('stroke-width', style.strokeWidth)
     .style('pointer-events', 'none')
 }
 
-function drawInteractionPaths() {
+function makeInteractionPaths() {
   const g = main.append('g').attr('class', 'interactive')
 
-  g.selectAll('path')
+  interactivePaths = g.selectAll('path')
   .data(data.countryDocs, d => d.country_code)
   .enter()
   .append('path')
@@ -209,14 +240,14 @@ function drawInteractionPaths() {
           .attr('stroke-width', style.strokeWidthHover)
           .moveToFront()
         d3.select(`circle.${d.country_code}`)
-          .attr('stroke', style.strokeColorHover)
+          // .attr('stroke', style.strokeColorHover)
           .attr('fill', style.strokeColorHover)
-          .attr('stroke-width', style.strokeWidthHover)
+          // .attr('stroke-width', style.strokeWidthHover)
           .moveToFront()
       }
 
 
-        d3.select('.label')
+      label
         .attr('display', null)
         .attr('y', yScale(lastValue) - 6)
         .text(`${d.country}, ${lastValue}`)
@@ -227,30 +258,43 @@ function drawInteractionPaths() {
     })
     .on('mouseout', (d, i, n) => {
       if(selected !== d.country) {
-        const strokeColor = getPathStroke(d);
+        const strokeColor = getPathColor(d);
         d3.select(`path.${d.country_code}`)
           .attr('stroke', strokeColor)
           .attr('stroke-width', style.strokeWidth)
 
         d3.select(`circle.${d.country_code}`)
-          .attr('stroke', strokeColor)
-          .attr('stroke-width', style.strokeWidth)
+          // .attr('stroke', strokeColor)
+          // .attr('stroke-width', style.strokeWidth)
           .attr('fill', strokeColor)
 
 
-        d3.select('.label').attr('display', 'none')
+        label.attr('display', 'none')
       }
       const sel = data.countryDocs.find((d) => d.country === selected )
       sel && d3.select(`.${sel.country_code}`).moveToFront()
 
-      d3.select('.label').moveToFront()
+      label.moveToFront()
     })
     .on('mouseup', (d, i, n) => {
 
       handleCountrySelect(d.country_code);
 
       dispatcher.call('datapointClick', null, d.country);
-    })
+    });
+}
+
+function makeLabel() {
+  label = main.append('g')
+    .append('text')
+    .attr('class', 'label')
+    .style('font-family', style.fontFamily)
+    .attr('display', 'none')
+    .attr('text-anchor', screen.w < THRESHOLD ? 'end' : 'start')
+    .attr('font-size', '16px')
+    .attr('x', screen.w < THRESHOLD ? screen.width - 8 : screen.width + 8)
+    .attr('fill', style.textColor)
+    .style('z-index', 100)
 }
 
 function handleCountrySelect(selectedCountry) {
@@ -258,15 +302,15 @@ function handleCountrySelect(selectedCountry) {
   const next = data.countryDocs.find((d) => d.country === selectedCountry )
 
   if(prev) {
-    const color = getPathStroke(prev, true);
+    const color = getPathColor(prev, true);
     d3.select(`path.${prev.country_code}`)
     .attr('stroke', color)
     .attr('filter', null)
     .attr('stroke-width', style.strokeWidth)
     d3.select(`circle.${prev.country_code}`)
       .attr('r', style.markerSize)
-      .attr('stroke', color)
-      .attr('stroke-width', style.strokeWidth)
+      // .attr('stroke', color)
+      // .attr('stroke-width', style.strokeWidth)
       .attr('fill', color )
       .attr('filter', null)
   }
@@ -280,13 +324,13 @@ function handleCountrySelect(selectedCountry) {
     d3.select(`circle.${next.country_code}`)
       .attr('r', style.selectedMarkerSize)
       .attr('fill', style.strokeColorSelected)
-      .attr('stroke', style.strokeColorSelected)
+      // .attr('stroke', style.strokeColorSelected)
 
     d3.selectAll(`.${next.country_code}`)
       .attr('filter', 'url(#white-glow)')
       .moveToFront();
 
-    d3.select('.label')
+    label
       .attr('display', null)
       .attr('y', yScale(lastValue) - 6)
       .text(`${next.country}, ${lastValue}`).moveToFront()
@@ -295,13 +339,54 @@ function handleCountrySelect(selectedCountry) {
   selected = selectedCountry;
 }
 
-function handleCaseType(caseType) {
+function handleCaseType(_caseType, _data) {
+  caseType = _caseType;
+  data = _data;
+
+  label.attr('display', 'none')
+  // makeScales();
+  // makeAxes();
+  updatePaths();
+  updateInteractivePaths();
+  updateCircleMarkers();
 
 }
 
+function updatePaths() {
+  paths.data(data.countryDocs, d => d.country_code)
+  paths.exit().remove();
+  const enterSelection = paths.enter()
+  paths.merge(enterSelection)
+    .transition(t)
+    .attr('stroke', d => getPathColor(d))
+    .attr('d', d => lineGen(d.historyArray))
+}
+
+function updateInteractivePaths() {
+  interactivePaths.data(data.countryDocs, d => d.country_code)
+
+  interactivePaths.exit().remove();
+
+  const enterSelection = interactivePaths.enter()
+
+  interactivePaths.merge(enterSelection)
+    .attr('d', d => lineGen(d.historyArray))
+}
+
+function updateCircleMarkers() {
+  circleMarkers.data(data.countryDocs, d => d.country_code)
+
+  circleMarkers.exit().remove()
+  const circleEnterSelection = circleMarkers.enter();
+  circleMarkers.merge(circleEnterSelection)
+    .attr('class', d => d.country_code )
+    .transition(t)
+    .attr('fill', d => getPathColor(d))
+    .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
+    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
+}
 const vis = {
   init,
-  // resize,
   handleCountrySelect,
   handleCaseType,
   style,

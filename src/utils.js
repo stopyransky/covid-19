@@ -1,19 +1,16 @@
-
 import { group } from 'd3-array';
-import * as data from './data.json';
 import * as allData from './data.all.json';
 
-
 function prepData(caseType) {
-  // let raw = data.default.locations
-  let raw = allData.default.confirmed.locations
+
+  let raw = allData.default[caseType].locations
     .filter(d => d.country_code !== 'XX');
 
   const byCountryCodeMap = group(raw, d => d.country);
+  const countryDocs = mergeByCountry(byCountryCodeMap);
+  const docs = extractHistory(countryDocs);
+  const countries = Array.from(new Set(docs.map(d => d.country)));
 
-  const countryDocs = mergeByCountry(byCountryCodeMap)
-  const docs = extractHistory(countryDocs)
-  const countries = Array.from(new Set(docs.map(d => d.country)))
   return {
     docs,
     countryDocs,
@@ -29,7 +26,6 @@ function extractHistory(countryDocs) {
 
     Object.keys(history).forEach(k => {
       const doc = { country, country_code, date: k, confirmed: history[k]}
-
       docs.push(doc)
     });
 
@@ -45,6 +41,7 @@ function mergeByCountry(map) {
 
     const { history, country, country_code } = arr[0];
     const doc = { country, country_code };
+
     if(arr.length > 1) {
 
       doc.history = concatenateHistory(arr)
@@ -52,16 +49,14 @@ function mergeByCountry(map) {
     } else {
 
       doc.history = history;
+
     }
 
-
-    let h = Object.keys(doc.history)
-      // .filter(k => doc.history[k] !== 0)
+    const historyArray = Object.keys(doc.history)
       .map(k => ({ key: k, date: new Date(k), confirmed: doc.history[k]}))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-
-    doc.historyArray = h;
+    doc.historyArray = historyArray;
     docs.push(doc);
   });
 
@@ -71,7 +66,7 @@ function mergeByCountry(map) {
 function concatenateHistory(values) {
   const aggregated = {}
   values.forEach(v => {
-    const history = v.history; // obj
+    const history = v.history;
     Object.keys(history).forEach((k, i) => {
       if(typeof aggregated[k] === 'undefined') {
         aggregated[k] = history[k];
@@ -83,7 +78,6 @@ function concatenateHistory(values) {
 
   return aggregated;
 }
-
 
 export default {
   prepData

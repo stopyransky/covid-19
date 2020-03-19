@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useReducer } from 'react';
+import React, { useEffect, useRef, useReducer, useCallback } from 'react';
 import './App.css';
 import Utils from './utils';
 import vis from './vis';
@@ -54,14 +54,14 @@ function App() {
   const [ state, dispatch ] = useReducer(reducer, defaultState);
   const setState = (type, value) => dispatch({ type, value });
 
-  useEffect(() => {
-      let data = Utils.prepData();
-      vis.init(svgRef.current, data);
-      setState('countries', data.countries)
-      vis.dispatcher.on('datapointClick', (country) => {
-        setState('selectedCountry', country)
-      });
-  }, []);
+  useEffect(useCallback(() => {
+    let data = Utils.prepData(state.caseType);
+    vis.init(svgRef.current, data, state.caseType);
+    setState('countries', data.countries)
+    vis.dispatcher.on('datapointClick', (country) => {
+      setState('selectedCountry', country)
+    });
+  }, [state.caseType]), []);
 
   useEffect(() => {
     function onResize() {
@@ -74,13 +74,18 @@ function App() {
     }
   }, []);
 
+  const updateData = useCallback(() => {
+    let data = Utils.prepData(state.caseType);
+    vis.handleCaseType(state.caseType, data);
+
+  }, [state.caseType])
+
+  useEffect(updateData, [state.caseType]);
+
   useEffect(() => {
     state.selectedCountry && vis.handleCountrySelect(state.selectedCountry)
   }, [ state.selectedCountry ]);
 
-  useEffect(() => {
-    vis.handleCaseType(state.caseType)
-  }, [state.caseType])
   const w = window.innerWidth;
   if(w < THRESHOLD) {
     document.body.style.overflowY = 'auto';
@@ -113,7 +118,7 @@ function App() {
           margin: '10px 0px',
           color: vis.style.strokeColor
         }}>Coronavirus cases per country over time.</h3>
-        {/* <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/> */}
+        <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
         <h3 className={'display'} style={{
           fontWeight: 700,
           fontSize: '12px',
