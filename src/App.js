@@ -134,52 +134,53 @@ function App() {
     document.body.style.overflowY = 'auto';
   }
 
-  return (
-    <div  style= {{
-        display: 'flex',
-        justifyContent: 'center',
-
-    }}>
-      <div style={{
-        position: 'relative',
-      }}>
-      <div style={{
-        position: 'absolute',
-        transform: w < THRESHOLD ? 'translate(-50%, 50px)' : null,
-        left: w < THRESHOLD ? '50%' : '170px',
-        top: w < THRESHOLD ? '0%' : '220px',
-        width: w < THRESHOLD ? '100%': null,
-        display: 'flex',
-        flexFlow: 'column nowrap',
-        alignItems: w < THRESHOLD ? 'center' : null,
-      }}>
-        <h1 className={'display'} style={{
-          fontWeight: 900,
-          color: 'white',
-          margin: 0,
-          fontSize: w < THRESHOLD ? '1.5rem' : '3rem'
-        }}>{t('Flattening the curve.')}</h1>
-        <h3 className={'display'} style={{
-          fontWeight: 700,
-          margin: '10px 0px',
-          color: vis.style.strokeColor,
-          fontSize: w < THRESHOLD ? '1rem' : '2rem'
-        }}>{t('Coronavirus cases per country over time.')}</h3>
-        <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
-        <h3 className={'display'} style={{
+  function CountrySelection() {
+    return (
+      <div>
+      <h3 className={'display'} style={{
           fontWeight: 700,
           fontSize: '12px',
           margin: '10px 0px',
           color: vis.style.strokeColor
         }}>{t('Select below or hover over a line to see details.')}</h3>
-      <select className={'select'}
-        style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
-        value={state.selectedCountry} onChange={e => {
-          setState('selectedCountry', e.target.value)
-        }}>
-        <option key={-1} value={''}>{t('Select Country')}</option>
-        {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
-      </select>
+        <select className={'select'}
+          style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
+          value={state.selectedCountry} onChange={e => {
+            setState('selectedCountry', e.target.value)
+          }}>
+          <option key={-1} value={''}>{t('Select Country')}</option>
+          {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
+        </select>
+      </div>
+    )
+  }
+
+  function Title() {
+    return (
+      <h1 className={'display'} style={{
+          fontWeight: 900,
+          color: 'white',
+          margin: 0,
+          fontSize: w < THRESHOLD ? '1.5rem' : '3rem'
+        }}>{t('Flattening the curve.')}
+      </h1>
+    )
+  }
+
+  function Subtitle() {
+    return (
+      <h3 className={'display'} style={{
+          fontWeight: 700,
+          margin: '10px 0px',
+          color: vis.style.strokeColor,
+          fontSize: w < THRESHOLD ? '1rem' : '2rem'
+        }}>{t('Coronavirus cases per country over time.')}
+      </h3>
+    )
+  }
+
+  function Settings() {
+    return (
       <div className={'display'} style={{display: 'flex', alignItems: 'center'}}>
         <div style={{ color: '#aaa', fontSize: '12px' }}>
           <span style={{
@@ -198,12 +199,35 @@ function App() {
         <LinkItem key={0} url={'https://github.com/Omaroid/Covid-19-API'} name={t('data source')} />
         <LinkItem key={1} url={'https://twitter.com/stopyransky'} name={t('author')} />
       </div>
+    )
+  }
 
+  return (
+    <div  style= {{
+        display: 'flex',
+        justifyContent: 'center',
+    }}>
+      <div style={{ position: 'relative', }}>
+      <div style={{
+        position: w < THRESHOLD ? 'relative' : 'absolute',
+        transform: w < THRESHOLD ? 'translate(-50%, 50px)' : null,
+        left: w < THRESHOLD ? '50%' : '170px',
+        top: w < THRESHOLD ? '0%' : '220px',
+        width: w < THRESHOLD ? '100%': null,
+        display: 'flex',
+        flexFlow: 'column nowrap',
+        alignItems: w < THRESHOLD ? 'center' : null,
+      }}>
+        <Title />
+        <Subtitle />
+        <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
+        <CountrySelection />
+        {w >= THRESHOLD && <Settings />}
       </div>
       <svg
         ref={svgRef}
         width={Math.min(THRESHOLD, window.innerWidth)}
-        height={window.innerHeight - 10}>
+        height={window.innerHeight}>
         <filter id="white-glow" x="-5000%" y="-5000%" width="10000%" height="10000%">
           <feFlood result="flood" floodColor="#ffffff" floodOpacity="1"></feFlood>
           <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"></feComposite>
@@ -215,6 +239,11 @@ function App() {
           </feMerge>
         </filter>
       </svg>
+      {w < THRESHOLD &&
+        <div style={{display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+          <Settings />
+        </div>
+      }
       </div>
     </div>
   );
