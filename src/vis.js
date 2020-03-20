@@ -4,7 +4,7 @@ import { THRESHOLD } from './App';
 const dispatcher = d3.dispatch('datapointClick')
 const format = d3.timeFormat('%d %b');
 
-const xDomain = [ new Date('2020-01-22'), new Date('2020-03-18')]
+const xDomain = [ new Date('2020-01-22'), new Date('2020-03-19')]
 
 let selected = '';
 
@@ -57,7 +57,7 @@ function init(svg, _data, _caseType) {
     top: 50,
     bottom: 50,
     left: 30,
-    right: w < THRESHOLD ? 30: 150,
+    right: w < THRESHOLD ? 30: 200,
   }
 
   screen = {
@@ -69,13 +69,15 @@ function init(svg, _data, _caseType) {
 
   main = svgSelection.append('g')
     .attr('class', 'main')
-    .attr('transform', `translate(20, 0)`);
+    .attr('transform', `translate(${screen.margin.left}, ${screen.margin.top})`);
 
   xAxisSel = main.append('g')
     .attr('class', 'x-axis')
+    .attr('transform', `translate(0, ${screen.height})`)
 
   yAxisSel = main.append('g')
-    .attr('class', 'y-axis');
+    .attr('class', 'y-axis')
+    .attr('transform', `translate(${screen.width}, 0)`);
 
   makeScales();
   makeAxes()
@@ -87,7 +89,7 @@ function init(svg, _data, _caseType) {
 
 function makeScales() {
   xScale = d3.scaleTime()
-    .range([screen.margin.left, screen.width])
+    .range([0, screen.width])
     .domain(xDomain);
 
   const confirmed = data.docs.map(d => d.confirmed);
@@ -95,7 +97,7 @@ function makeScales() {
   yDomain = d3.extent(confirmed);
 
   yScale = d3.scaleSymlog()
-    .range([screen.height + screen.margin.top, screen.margin.top])
+    .range([screen.height, 0])
     .domain(yDomain)
 
   lineGen = d3.line()
@@ -120,13 +122,14 @@ function getXAxis() {
 
 function getYAxis(){
   return d3.axisRight(yScale)
+    // .tickPadding(6)
     .tickValues(ticks[caseType])
 }
 
 function makeAxes() {
 
   xAxisSel
-    .attr('transform', `translate(0, ${screen.height + screen.margin.top})`)
+
     .call(getXAxis());
 
   xAxisSel.selectAll('.tick')
@@ -142,21 +145,20 @@ function makeAxes() {
   if(screen.w >= THRESHOLD) {
 
     yAxisSel
-      .attr('transform', `translate(${screen.width}, 0)`)
-      .transition(t)
+      // .transition(t)
       .call(getYAxis())
 
     yAxisSel.selectAll('.tick')
       .select('text')
       .attr('fill', style.tickTextColor)
-      .style('font-size', style.tickTextSize)
       .attr('dy', 2)
+      .style('font-size', style.tickTextSize)
       .style('font-family', style.fontFamily);
 
     yAxisSel.selectAll('.tick')
       .select('line')
-      .attr('x1', 0)
-      .attr('x2', -screen.width + screen.margin.left)
+      .attr('x1', -screen.width)
+      .attr('x2', 0)
       .attr('stroke-dasharray', style.tickLineStyle)
       .attr('stroke', style.tickLineColor);
   }
@@ -252,9 +254,6 @@ function makeInteractionPaths() {
         .attr('y', yScale(lastValue) - 6)
         .text(`${d.country}, ${lastValue}`)
         .moveToFront()
-
-
-
     })
     .on('mouseout', (d, i, n) => {
       if(selected !== d.country) {
@@ -267,8 +266,8 @@ function makeInteractionPaths() {
           // .attr('stroke', strokeColor)
           // .attr('stroke-width', style.strokeWidth)
           .attr('fill', strokeColor)
-        label.moveToFront()
-        // label.attr('display', 'none')
+        // label.moveToFront()
+        label.attr('display', 'none')
       }
       const sel = data.countryDocs.find((d) => d.country === selected )
       sel && d3.select(`.${sel.country_code}`).moveToFront()

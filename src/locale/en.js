@@ -6,7 +6,7 @@ export default {
     "Select Country": "Select Country",
     "data source": "data source",
     "author": "author",
-    "Flattening the curve.": "Flattening the curve.",
+    "Flattening the curve.": "Fighting the virus.",
     "confirmed": "confirmed",
     "deaths": "deaths",
     "recovered": "recovered",
