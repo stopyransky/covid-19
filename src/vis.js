@@ -267,9 +267,8 @@ function makeInteractionPaths() {
           // .attr('stroke', strokeColor)
           // .attr('stroke-width', style.strokeWidth)
           .attr('fill', strokeColor)
-
-
-        label.attr('display', 'none')
+        label.moveToFront()
+        // label.attr('display', 'none')
       }
       const sel = data.countryDocs.find((d) => d.country === selected )
       sel && d3.select(`.${sel.country_code}`).moveToFront()

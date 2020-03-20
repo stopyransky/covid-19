@@ -1,13 +1,18 @@
 import React, { useEffect, useRef, useReducer, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import 'i18next-browser-languagedetector';
+
 import './App.css';
 import Utils from './utils';
 import vis from './vis';
 
+
 export const THRESHOLD = 1200;
 
-function Radio ({ type, value, onChange, isChecked }) {
+function Radio ({ type, value, label, onChange, isChecked }) {
+  const isMobile = window.innerWidth < THRESHOLD;
   return (
-    <div style={{ color: 'white', marginRight: '8px' }}>
+    <div style={{ color: 'white', marginRight: '8px', display: 'flex', justifyContent: 'center' }}>
       <input
         type="radio"
         id={value}
@@ -18,27 +23,60 @@ function Radio ({ type, value, onChange, isChecked }) {
       />
       <label
         className={'display'}
-        style={{ marginLeft: '4px', color: isChecked ? vis.style.strokeColor: 'white' }}
-        htmlFor={value}>{value}</label>
+        style={{
+          marginLeft: isMobile ? '2px' :  '4px',
+          color: isChecked ? vis.style.strokeColor: 'white',
+          fontSize: isMobile ? '0.8rem' : '1rem'
+        }}
+        htmlFor={value}>{label}</label>
     </div>
-  )
+  );
 }
 
 function DatasetSelection({ onChange, selected })  {
+  const [ t ] = useTranslation();
   return (
     <div style={{ display: 'flex' }}>
-      <Radio type="caseType" value="confirmed" isChecked={selected === 'confirmed'} onChange={onChange}/>
-      <Radio type="caseType" value="deaths" isChecked={selected === 'deaths'} onChange={onChange}/>
-      <Radio type="caseType" value="recovered" isChecked={selected === 'recovered'} onChange={onChange} />
+      <Radio
+        type="caseType"
+        value="confirmed"
+        label={t('confirmed')}
+        isChecked={selected === 'confirmed'}
+        onChange={onChange}
+      />
+      <Radio
+        type="caseType"
+        value="deaths"
+        label={t('deaths')}
+        isChecked={selected === 'deaths'}
+        onChange={onChange}
+      />
+      <Radio
+        type="caseType"
+        value="recovered"
+        label={t('recovered')}
+        isChecked={selected === 'recovered'}
+        onChange={onChange}
+      />
     </div>
-  )
+  );
 }
 
+function LinkItem({url, name}) {
+
+  return (
+    <span className={'display'} style={{ zIndex: 999, padding: '0px 5px ', color: vis.style.strokeColor, fontSize: '12px' }}>
+      <a style={{ color: '#aaa', textDecoration: 'none' }} noreferer='true' noopener='true' target='blank' href={url}>{name}</a>
+    </span>
+  )
+}
 const defaultState = { countries: [], selectedCountry: '', caseType: 'confirmed' }
 
 function reducer(state, action) {
   switch(action.type) {
-    case 'countries': return { ...state, countries: action.value };
+    case 'countries': {
+      return { ...state, countries: action.value };
+    }
     case 'selectedCountry' : {
       return { ...state, selectedCountry: action.value};
     }
@@ -51,6 +89,7 @@ function reducer(state, action) {
 
 function App() {
   const svgRef = useRef(null);
+  const [ t, i18n ] = useTranslation();
   const [ state, dispatch ] = useReducer(reducer, defaultState);
   const setState = (type, value) => dispatch({ type, value });
 
@@ -64,89 +103,102 @@ function App() {
   }, [state.caseType]), []);
 
   useEffect(() => {
-    function onResize() {
-      window.location.reload()
-    }
 
-    window.addEventListener('resize', onResize)
+    let resizeTimer;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        // update treshold
+        window.location.reload();
+      }, 300);
+    };
+
+    window.addEventListener('resize', handleResize)
     return () => {
-      window.removeEventListener(onResize)
+      window.removeEventListener(handleResize)
     }
   }, []);
 
-  const updateData = useCallback(() => {
+  useEffect(useCallback(() => {
     let data = Utils.prepData(state.caseType);
     vis.handleCaseType(state.caseType, data);
-
-  }, [state.caseType])
-
-  useEffect(updateData, [state.caseType]);
+  }, [state.caseType]), [state.caseType]);
 
   useEffect(() => {
     state.selectedCountry && vis.handleCountrySelect(state.selectedCountry)
   }, [ state.selectedCountry ]);
 
   const w = window.innerWidth;
+
   if(w < THRESHOLD) {
     document.body.style.overflowY = 'auto';
   }
+
   return (
     <div  style= {{
-       display: 'flex',
-      justifyContent: 'center',
+        display: 'flex',
+        justifyContent: 'center',
 
     }}>
       <div style={{
         position: 'relative',
-        maxWidth: 1400,
-
       }}>
       <div style={{
-        position: w < THRESHOLD ? 'relative' : 'absolute',
-        left: w < THRESHOLD ? null : '170px',
-        top: w < THRESHOLD ? null : '240px',
-        margin: w < THRESHOLD ? '10px': null,
+        position: 'absolute',
+        transform: w < THRESHOLD ? 'translate(-50%, 50px)' : null,
+        left: w < THRESHOLD ? '50%' : '170px',
+        top: w < THRESHOLD ? '0%' : '220px',
+        width: w < THRESHOLD ? '100%': null,
+        display: 'flex',
+        flexFlow: 'column nowrap',
+        alignItems: w < THRESHOLD ? 'center' : null,
       }}>
         <h1 className={'display'} style={{
           fontWeight: 900,
           color: 'white',
           margin: 0,
-          fontSize: '48px'
-        }}>Flattening the curve.</h1>
+          fontSize: w < THRESHOLD ? '1.5rem' : '3rem'
+        }}>{t('Flattening the curve.')}</h1>
         <h3 className={'display'} style={{
           fontWeight: 700,
           margin: '10px 0px',
-          color: vis.style.strokeColor
-        }}>Coronavirus cases per country over time.</h3>
+          color: vis.style.strokeColor,
+          fontSize: w < THRESHOLD ? '1rem' : '2rem'
+        }}>{t('Coronavirus cases per country over time.')}</h3>
         <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
         <h3 className={'display'} style={{
           fontWeight: 700,
           fontSize: '12px',
           margin: '10px 0px',
           color: vis.style.strokeColor
-        }}>Select below or hover over a line to see details.</h3>
-      <select
+        }}>{t('Select below or hover over a line to see details.')}</h3>
+      <select className={'select'}
         style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
         value={state.selectedCountry} onChange={e => {
           setState('selectedCountry', e.target.value)
         }}>
-        <option key={-1} value={''}>Select Country</option>
+        <option key={-1} value={''}>{t('Select Country')}</option>
         {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
       </select>
-      <div style={{display: 'flex'}}>
-        <p className={'display'} style={{ zIndex: 999, margin: '5px 5px 0px 0px', color: vis.style.strokeColor, fontSize: '12px' }}>
-        <a style={{
-            color: '#aaa',
-          }} noreferer='true' noopener='true' target='blank' href='https://github.com/Omaroid/Covid-19-API'>data source</a>
-
-          </p>
-        <p className={'display'} style={{ zIndex: 999,  margin: '5px 0px 0px 5px', color: vis.style.strokeColor, fontSize: '12px' }}>
-          <a style={{
-            color: '#aaa',
-          }} noreferer='true' noopener='true' target='blank' href='https://twitter.com/stopyransky'>author</a>
-
-        </p>
+      <div className={'display'} style={{display: 'flex', alignItems: 'center'}}>
+        <div style={{ color: '#aaa', fontSize: '12px' }}>
+          <span style={{
+            padding: '0px 5px ',
+            cursor: 'pointer',
+            textDecoration: i18n.language === 'pl' ? 'underline' : null }}
+            onClick={() => i18n.changeLanguage('pl')}>PL</span>
+          <span style={{ padding: '0px 2px '}}>/</span>
+          <span style={{
+            padding: '0px 5px ',
+            cursor: 'pointer',
+            textDecoration: i18n.language === 'en' ? 'underline' : null}}
+            onClick={() => i18n.changeLanguage('en')}>EN
+          </span>
+        </div>
+        <LinkItem key={0} url={'https://github.com/Omaroid/Covid-19-API'} name={t('data source')} />
+        <LinkItem key={1} url={'https://twitter.com/stopyransky'} name={t('author')} />
       </div>
+
       </div>
       <svg
         ref={svgRef}
