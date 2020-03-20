@@ -108,7 +108,7 @@ function App() {
     const handleResize = () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        // update treshold
+        // TODO
         window.location.reload();
       }, 300);
     };
@@ -136,20 +136,21 @@ function App() {
 
   function CountrySelection() {
     return (
-      <div>
-      <h3 className={'display'} style={{
-          fontWeight: 700,
-          fontSize: '12px',
-          margin: '10px 0px',
-          color: vis.style.strokeColor
-        }}>{t('Select below or hover over a line to see details.')}</h3>
-        <select className={'select'}
-          style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
-          value={state.selectedCountry} onChange={e => {
-            setState('selectedCountry', e.target.value)
-          }}>
-          <option key={-1} value={''}>{t('Select Country')}</option>
-          {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
+      <div style={{ display: 'flex', flexFlow: 'column nowrap', justifyContent: 'center'}}>
+        <h3 className={'display'} style={{
+            fontWeight: 700,
+            fontSize: '12px',
+            margin: '10px 0px',
+            color: vis.style.strokeColor
+          }}>{t('Select below or hover over a line to see details.')}
+        </h3>
+          <select className={'select'}
+            style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
+            value={state.selectedCountry} onChange={e => {
+              setState('selectedCountry', e.target.value)
+            }}>
+            {!state.selectedCountry && <option key={-1} value={''}>{t('Select Country')}</option>}
+            {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
         </select>
       </div>
     )
