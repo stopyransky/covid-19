@@ -4,7 +4,7 @@ import { THRESHOLD } from './App';
 const dispatcher = d3.dispatch('datapointClick')
 const format = d3.timeFormat('%d %b');
 
-const xDomain = [ new Date('2020-01-22'), new Date('2020-03-19')]
+const xDomain = [ new Date('2020-01-22'), new Date('2020-03-20')]
 
 let selected = '';
 
@@ -21,7 +21,7 @@ d3.selection.prototype.moveToFront = function() {
 
 const ticks = {
   confirmed: [ 5, 50, 500, 5000, 50000 ],
-  deaths: [ 5, 50, 500, 3000 ],
+  deaths: [ 5, 50, 500, 5000 ],
   recovered: [ 5, 50, 500, 5000, 50000 ],
 
 }
