@@ -4,12 +4,11 @@ import { THRESHOLD } from './App';
 const dispatcher = d3.dispatch('datapointClick')
 const format = d3.timeFormat('%d %b');
 
-const xDomain = [ new Date('2020-01-22'), new Date('2020-03-20')]
-
 let selected = '';
 
 let data, caseType;
 let svgSelection, screen;
+let xDomain;
 let main, xScale, yScale, yDomain, lineGen, xAxisSel, yAxisSel;
 let circleMarkers, paths, interactivePaths, label;
 
@@ -66,6 +65,10 @@ function init(svg, _data, _caseType) {
     height: h - margin.top - margin.bottom,
     margin
   }
+  const sampleHistory = data.countryDocs[0].historyArray;
+  const endDate = sampleHistory && sampleHistory.length ? sampleHistory[sampleHistory.length-1].date : new Date();
+
+  xDomain = [ new Date('2020-01-22'), endDate]
 
   main = svgSelection.append('g')
     .attr('class', 'main')
