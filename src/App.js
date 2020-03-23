@@ -6,7 +6,6 @@ import './App.css';
 import Utils from './utils';
 import vis from './vis';
 
-
 export const THRESHOLD = 1200;
 
 function Radio ({ type, value, label, onChange, isChecked }) {
@@ -162,7 +161,7 @@ function App() {
           fontWeight: 900,
           color: 'white',
           margin: 0,
-          fontSize: w < THRESHOLD ? '1.5rem' : '3rem'
+          fontSize: w < THRESHOLD ? '1.5rem' : '3rem',
         }}>{t('Flattening the curve.')}
       </h1>
     )
@@ -174,7 +173,7 @@ function App() {
           fontWeight: 700,
           margin: '10px 0px',
           color: vis.style.strokeColor,
-          fontSize: w < THRESHOLD ? '1rem' : '2rem'
+          fontSize: w < THRESHOLD ? '1rem' : '2rem',
         }}>{t('Coronavirus cases per country over time.')}
       </h3>
     )
@@ -212,8 +211,8 @@ function App() {
       <div style={{
         position: w < THRESHOLD ? 'relative' : 'absolute',
         transform: w < THRESHOLD ? 'translate(-50%, 50px)' : null,
-        left: w < THRESHOLD ? '50%' : '170px',
-        top: w < THRESHOLD ? '0%' : '220px',
+        left: w < THRESHOLD ? '50%' : '100px',
+        top: w < THRESHOLD ? '0%' : '200px',
         width: w < THRESHOLD ? '100%': null,
         display: 'flex',
         flexFlow: 'column nowrap',
