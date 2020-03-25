@@ -92,7 +92,7 @@ async function prepData(caseType, fallback = false) {
 
 function getJsonData(caseType) {
   if(caseTypes.includes(caseType)){
-    console.log(jsonData.default)
+
     return jsonData.default[caseType].locations.filter(d => d.country_code !== 'XX');
   }
   return jsonData.default['confirmed'].locations.filter(d => d.country_code !== 'XX');

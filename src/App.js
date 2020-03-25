@@ -97,7 +97,7 @@ function App() {
 
   useEffect(useCallback(() => {
     Utils.prepData(state.caseType, IS_FALLBACK).then(data => {
-      console.log(data);
+
       vis.init(svgRef.current, data, state.caseType);
       setState('countries', data.countries);
 
