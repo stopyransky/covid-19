@@ -23,6 +23,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-/src/data.json
-/src/data.all.json
+/src/data
+/src/fallback
 

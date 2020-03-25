@@ -4,9 +4,12 @@ import 'i18next-browser-languagedetector';
 
 import './App.css';
 import Utils from './utils';
+
 import vis from './vis';
 
 export const THRESHOLD = 1200;
+const IS_FALLBACK = false;
+
 
 function Radio ({ type, value, label, onChange, isChecked }) {
   const isMobile = window.innerWidth < THRESHOLD;
@@ -50,13 +53,13 @@ function DatasetSelection({ onChange, selected })  {
         isChecked={selected === 'deaths'}
         onChange={onChange}
       />
-      <Radio
+      {/* <Radio
         type="caseType"
         value="recovered"
         label={t('recovered')}
         isChecked={selected === 'recovered'}
         onChange={onChange}
-      />
+      /> */}
     </div>
   );
 }
@@ -93,12 +96,21 @@ function App() {
   const setState = (type, value) => dispatch({ type, value });
 
   useEffect(useCallback(() => {
-    let data = Utils.prepData(state.caseType);
-    vis.init(svgRef.current, data, state.caseType);
-    setState('countries', data.countries)
-    vis.dispatcher.on('datapointClick', (country) => {
-      setState('selectedCountry', country)
-    });
+    Utils.prepData(state.caseType, IS_FALLBACK).then(data => {
+      console.log(data);
+      vis.init(svgRef.current, data, state.caseType);
+      setState('countries', data.countries);
+
+      vis.dispatcher.on('datapointClick', (d) => {
+        setState('selectedCountry', d.country)
+      });
+    })
+
+
+    return () => {
+      vis.dispatcher.on('datapointClick', null);
+    }
+
   }, [state.caseType]), []);
 
   useEffect(() => {
@@ -119,8 +131,10 @@ function App() {
   }, []);
 
   useEffect(useCallback(() => {
-    let data = Utils.prepData(state.caseType);
-    vis.handleCaseType(state.caseType, data);
+    Utils.prepData(state.caseType, IS_FALLBACK).then(data => {
+      vis.handleCaseType(state.caseType, data);
+    });
+
   }, [state.caseType]), [state.caseType]);
 
   useEffect(() => {
@@ -148,7 +162,7 @@ function App() {
             value={state.selectedCountry} onChange={e => {
               setState('selectedCountry', e.target.value)
             }}>
-            {!state.selectedCountry && <option key={-1} value={''}>{t('Select Country')}</option>}
+            {!state.selectedCountry && <option value={''} key={-1} >{t('Select Country')}</option>}
             {state.countries.map(c => (<option value={c} key={c}>{c}</option>))}
         </select>
       </div>

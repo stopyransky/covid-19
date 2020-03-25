@@ -1,22 +1,13 @@
 import * as d3 from 'd3';
 import { THRESHOLD } from './App';
 
-const dispatcher = d3.dispatch('datapointClick')
-const format = d3.timeFormat('%d %b');
-
-let selected = '';
-
-let data, caseType;
-let svgSelection, screen;
-let xDomain;
-let main, xScale, yScale, yDomain, lineGen, xAxisSel, yAxisSel;
-let circleMarkers, paths, interactivePaths, label;
-
-const t = d3.transition().duration(1000).ease(d3.easeBack)
-
 d3.selection.prototype.moveToFront = function() {
   return this.each(function() { this.parentNode.appendChild(this); });
 };
+
+const dispatcher = d3.dispatch('datapointClick')
+const format = d3.timeFormat('%d %b');
+const t = d3.transition().duration(1000).ease(d3.easeBack)
 
 const ticks = {
   confirmed: [ 5, 50, 500, 5000, 50000 ],
@@ -24,6 +15,7 @@ const ticks = {
   recovered: [ 5, 50, 500, 5000, 50000 ],
 
 }
+
 const style = {
   fontFamily: 'Playfair Display',
   strokeColor: '#FFC042',
@@ -44,13 +36,19 @@ const style = {
   circleStrokeWidth: 0,
 }
 
+let selected = '';
+let data, screen, caseType;
+let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label;
+let xScale, yScale, xDomain, yDomain, lineGen;
+
 function init(svg, _data, _caseType) {
   data = _data;
   caseType = _caseType;
 
-  svgSelection = d3.select(svg);
-  const w = svgSelection.attr('width');
-  const h = svgSelection.attr('height');
+  svgSel = d3.select(svg);
+
+  const w = svgSel.attr('width');
+  const h = svgSel.attr('height');
 
   const margin = {
     top: 50,
@@ -65,20 +63,21 @@ function init(svg, _data, _caseType) {
     height: h - margin.top - margin.bottom,
     margin
   }
+
   const sampleHistory = data.countryDocs[0].historyArray;
   const endDate = sampleHistory && sampleHistory.length ? sampleHistory[sampleHistory.length-1].date : new Date();
 
   xDomain = [ new Date('2020-01-22'), endDate]
 
-  main = svgSelection.append('g')
+  mainSel = svgSel.append('g')
     .attr('class', 'main')
     .attr('transform', `translate(${screen.margin.left}, ${screen.margin.top})`);
 
-  xAxisSel = main.append('g')
+  xAxisSel = mainSel.append('g')
     .attr('class', 'x-axis')
     .attr('transform', `translate(0, ${screen.height})`)
 
-  yAxisSel = main.append('g')
+  yAxisSel = mainSel.append('g')
     .attr('class', 'y-axis')
     .attr('transform', `translate(${screen.width}, 0)`);
 
@@ -88,6 +87,11 @@ function init(svg, _data, _caseType) {
   makePaths()
   makeInteractionPaths();
   makeLabel();
+
+  dispatcher.on('datapointClick', (d) => {
+    handleCountrySelect(d.country_code);
+  });
+
 }
 
 function makeScales() {
@@ -95,8 +99,11 @@ function makeScales() {
     .range([0, screen.width])
     .domain(xDomain);
 
-  const confirmed = data.docs.map(d => d.confirmed);
-
+  // const confirmed = data.docs.map(d => d.confirmed);
+  const confirmed = data.countryDocs.reduce((a, c) => {
+    const values = c.historyArray.map(h => h.confirmed)
+    return [...a, ...values];
+  }, [])
   yDomain = d3.extent(confirmed);
 
   yScale = d3.scaleSymlog()
@@ -172,7 +179,7 @@ function makeAxes() {
 
 function makeCircleMarkers() {
 
-  circleMarkers = main
+  circleMarkers = mainSel
   .selectAll('circle')
   .data(data.countryDocs, d => d.country_code)
   .enter()
@@ -210,22 +217,22 @@ function getPathColor(d, isDeselected) {
 }
 
 function makePaths() {
-  paths = main
+  paths = mainSel
   .selectAll('path')
   .data(data.countryDocs, d => d.country_code)
   .enter()
   .append('path')
-    .attr('class', d => d.country_code )
-    .attr('d', d => lineGen(d.historyArray))
-    .attr('fill', 'none')
-    .attr('stroke', d => getPathColor(d))
-    .style("stroke-linecap", "round")
-    .attr('stroke-width', style.strokeWidth)
-    .style('pointer-events', 'none')
+  .attr('class', d => d.country_code )
+  .attr('d', d => lineGen(d.historyArray))
+  .attr('stroke', d => getPathColor(d))
+  .attr('stroke-width', style.strokeWidth)
+  .attr('fill', 'none')
+  .style("stroke-linecap", "round")
+  .style('pointer-events', 'none')
 }
 
 function makeInteractionPaths() {
-  const g = main.append('g').attr('class', 'interactive')
+  const g = mainSel.append('g').attr('class', 'interactive')
 
   interactivePaths = g.selectAll('path')
   .data(data.countryDocs, d => d.country_code)
@@ -278,15 +285,12 @@ function makeInteractionPaths() {
       label.moveToFront()
     })
     .on('mouseup', (d, i, n) => {
-
-      handleCountrySelect(d.country_code);
-
-      dispatcher.call('datapointClick', null, d.country);
+      dispatcher.call('datapointClick', null, d);
     });
 }
 
 function makeLabel() {
-  label = main.append('g')
+  label = mainSel.append('g')
     .append('text')
     .attr('class', 'label')
     .style('font-family', style.fontFamily)
@@ -345,8 +349,7 @@ function handleCaseType(_caseType, _data) {
   data = _data;
 
   label.attr('display', 'none')
-  // makeScales();
-  // makeAxes();
+
   updatePaths();
   updateInteractivePaths();
   updateCircleMarkers();
@@ -386,6 +389,7 @@ function updateCircleMarkers() {
     .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
     .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
 }
+
 const vis = {
   init,
   handleCountrySelect,
