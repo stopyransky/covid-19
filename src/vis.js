@@ -45,7 +45,6 @@ let xScale, yScale, xDomain, yDomain, lineGen;
 function init(svg, _data, _caseType) {
   data = _data;
   caseType = _caseType;
-  console.log(data);
   svgSel = d3.select(svg);
 
   const w = svgSel.attr('width');
