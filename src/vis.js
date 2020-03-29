@@ -39,7 +39,7 @@ const style = {
 
 let selected = '';
 let data, screen, caseType;
-let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label, areaSel, histogramSel;
+let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label, selectLabel, areaSel, histogramSel;
 let xScale, yScale, xDomain, yDomain, lineGen;
 
 function init(svg, _data, _caseType) {
@@ -342,6 +342,16 @@ function makeLabel() {
     .attr('x', screen.w < THRESHOLD ? screen.width - 8 : screen.width + 8)
     .attr('fill', style.textColor)
     .style('z-index', 100)
+
+  selectLabel = mainSel.append('g').append('text')
+    .attr('class', 'select-label')
+    .style('font-family', style.fontFamily)
+    .attr('display', 'none')
+    .attr('text-anchor', screen.w < THRESHOLD ? 'end' : 'start')
+    .attr('font-size', '16px')
+    .attr('x', screen.w < THRESHOLD ? screen.width - 8 : screen.width + 8)
+    .attr('fill', style.textColor)
+    .style('z-index', 100)
 }
 
 function handleCountrySelect(selectedCountry) {
@@ -374,7 +384,7 @@ function handleCountrySelect(selectedCountry) {
       .attr('filter', 'url(#white-glow)')
       .moveToFront();
 
-    label
+    selectLabel
       .attr('display', null)
       .attr('y', yScale(lastValue) - 6)
       .text(`${next.country}, ${lastValue}`).moveToFront();
