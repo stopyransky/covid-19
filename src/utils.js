@@ -13,80 +13,48 @@ function getWDVPData() {
   return d3.dsv(';', wdvpSrc)
 }
 
-async function prepData(caseType, fallback = false) {
+async function prepData(caseType) {
   let wdvp = await getWDVPData();
   let raw;
   let byCountryMap;
   let countryDocs;
   let countries;
+  let globalHistory;
 
-  if(fallback) {
-    raw = await getCSVData(caseType)
-    byCountryMap = group(raw, d => d['Country/Region']);
-    countries = Array.from(new Set(raw.map(d => d['Country/Region'])));
-    // const days = Array.from(new Set(data.map(d => d['Last Update'])));
+  raw = getJsonData(caseType);
+  byCountryMap = group(raw, d => d.country);
+  countryDocs = mergeHistoryByCountry(byCountryMap);
 
-    countryDocs = countries.map(c => {
+  globalHistory = countryDocs.reduce((acc, curr) => {
+    const history = curr.historyArray;
 
-      const arr = byCountryMap.get(c);
+    history.forEach(h => {
+      const existing = acc.find(d => d.key === h.key);
+      if(existing) {
+        existing.confirmed += h.confirmed;
+        existing.confirmedChange += h.confirmedChange;
+        existing.deaths += h.deaths;
+        existing.deathsChange += h.deathsChange;
+      } else {
+        acc.push({ ...h})
+      }
+    });
 
-      const history = arr.reduce((acc, curr) => {
-        const { ['Province/State']: _pe, ['Country/Region']: _cy, Lat, Long, ...currHistory } = curr;
+    return acc;
+  }, [ { key: '1/21/20', date: new Date('1/21/20'), confirmed: 0, confirmedChange: 0, deaths: 0, deathsChange: 0 }]);
 
-        Object.keys(currHistory).forEach(k => {
-          if(acc[k]) {
-            acc[k] += +currHistory[k]
-          } else {
-            acc[k] = +currHistory[k]
-          }
-        })
+  countries = Array.from(new Set(countryDocs.map(d => d.country)))
+    .sort((a, b) => {
+      if(a > b) return 1;
+      if(a < b) return -1;
+      return 0
+    });
 
-        return acc;
-      }, { '1/21/20': 0 })
-
-
-      const historyArray = Object.keys(history)
-          .map(k => ({
-            key: k,
-            date: new Date(k),
-            confirmed: history[k],
-            // recovered: histories.recovered[k],
-            // deaths: histories.deaths[k]
-          }))
-          .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-      const wdvpItem = wdvp.find(d => d.country === c) ;
-      let country_code = wdvpItem ? wdvpItem.ISO2 : 'XX' ;
-
-      return {
-        country: c,
-        country_code,
-        historyArray
-      };
-    })
-    // Array.from(byCountryMap).forEach(([countryName, arr]) => {
-
-    //   const item = {
-    //     country: countryName,
-
-    //   }
-    // });
-
-  } else {
-    raw = getJsonData(caseType);
-    byCountryMap = group(raw, d => d.country);
-    countryDocs = mergeHistoryByCountry(byCountryMap);
-    countries = Array.from(new Set(countryDocs.map(d => d.country)))
-      .sort((a, b) => {
-        if(a > b) return 1;
-        if(a < b) return -1;
-        return 0
-      });
+  return {
+    countryDocs,
+    countries,
+    globalHistory,
   }
-    return {
-      countryDocs,
-      countries,
-    }
 
 }
 
@@ -136,29 +104,17 @@ function getCountryData(countryName, key) {
 function mergeHistoryByCountry(map) {
   const docs = [];
 
-  map.forEach((arr, key) => {
+  map.forEach(arr => {
 
-    const { history, country, country_code } = arr[0];
+    const { country, country_code } = arr[0];
 
-    let tempHistory = history;
-
-    if(arr.length > 1) {
-
-      tempHistory = concatenateHistory(arr)
-
-    }
-
-    const histories = getCountryData(country);
-
-    const historyArray = Object.keys(tempHistory)
-      .map(k => ({
-        key: k,
-        date: new Date(k),
-        confirmed: tempHistory[k],
-        recovered: histories.recovered[k],
-        deaths: histories.deaths[k]
-      }))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    const historyArray = concatenateHistory(arr)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .map((item, index, items) => ({
+        ...item,
+        confirmedChange: index ? item.confirmed - items[index - 1].confirmed : 0,
+        deathsChange: index ? item.deaths - items[index - 1].deaths : 0,
+      }));
 
     docs.push({ country, country_code, historyArray });
   });
@@ -167,17 +123,26 @@ function mergeHistoryByCountry(map) {
 }
 
 function concatenateHistory(values) {
-  const aggregated = {}
-  values.forEach(v => {
-    const history = v.history;
+
+  const aggregated = values.reduce((acc, curr) => {
+    const history = curr.history;
+    const histories = getCountryData(curr.country);
+
     Object.keys(history).forEach((k, i) => {
-      if(typeof aggregated[k] === 'undefined') {
-        aggregated[k] = history[k];
+      const existing = acc.find(d => d.key === k);
+      if(existing) {
+        existing.confirmed += history[k];
       } else {
-        aggregated[k] += history[k]
+        acc.push({
+          key: k,
+          date: new Date(k),
+          confirmed: history[k],
+          deaths: histories.deaths[k]
+        });
       }
-    })
-  });
+    });
+    return acc;
+  }, []);
 
   return aggregated;
 }

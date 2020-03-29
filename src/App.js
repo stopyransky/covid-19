@@ -53,13 +53,6 @@ function DatasetSelection({ onChange, selected })  {
         isChecked={selected === 'deaths'}
         onChange={onChange}
       />
-      {/* <Radio
-        type="caseType"
-        value="recovered"
-        label={t('recovered')}
-        isChecked={selected === 'recovered'}
-        onChange={onChange}
-      /> */}
     </div>
   );
 }

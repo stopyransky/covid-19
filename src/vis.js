@@ -6,6 +6,7 @@ d3.selection.prototype.moveToFront = function() {
 };
 
 const dispatcher = d3.dispatch('datapointClick')
+
 const format = d3.timeFormat('%d %b');
 const t = d3.transition().duration(1000).ease(d3.easeBack)
 
@@ -38,13 +39,13 @@ const style = {
 
 let selected = '';
 let data, screen, caseType;
-let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label;
+let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label, areaSel, histogramSel;
 let xScale, yScale, xDomain, yDomain, lineGen;
 
 function init(svg, _data, _caseType) {
   data = _data;
   caseType = _caseType;
-
+  console.log(data);
   svgSel = d3.select(svg);
 
   const w = svgSel.attr('width');
@@ -52,7 +53,7 @@ function init(svg, _data, _caseType) {
 
   const margin = {
     top: 50,
-    bottom: 50,
+    bottom: 200,
     left: 30,
     right: w < THRESHOLD ? 30: 200,
   }
@@ -75,7 +76,7 @@ function init(svg, _data, _caseType) {
 
   xAxisSel = mainSel.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', `translate(0, ${screen.height})`)
+    .attr('transform', `translate(0, ${screen.height + 150})`)
 
   yAxisSel = mainSel.append('g')
     .attr('class', 'y-axis')
@@ -88,6 +89,48 @@ function init(svg, _data, _caseType) {
   makeInteractionPaths();
   makeLabel();
 
+  histogramSel = mainSel.append('g')
+    .attr('class', 'histogram')
+    .attr('transform', `translate(${0}, ${screen.height})`)
+
+  histogramSel.append('g').attr('class', 'histogram-axis');
+
+  mainSel.append('line')
+    .attr('x1', 0)
+    .attr('x2', screen.width)
+    .attr('y1', screen.height + 10)
+    .attr('y2', screen.height + 10)
+    .attr('stroke', style.tickLineColor)
+
+  histogramSel.append('text')
+  .attr('class', 'histogram-caption')
+  .attr('fill', style.strokeColor)
+  .attr('x', 70)
+  .attr('text-anchor', 'start')
+  .attr('y', 32)
+  .style('font-size', '1rem')
+  .style('font-family', style.fontFamily)
+  .text('Daily change')
+
+  histogramSel.append('text')
+  .attr('class', 'histogram-label')
+  .attr('fill', style.tickTextColor)
+  .attr('x', 180)
+  .attr('text-anchor', 'start')
+  .attr('y', 32)
+  .style('font-size', '1rem')
+  .style('font-family', style.fontFamily)
+  .text('Global')
+
+  mainSel.append('line')
+    .attr('x1', 0)
+    .attr('x2', screen.width)
+    .attr('y1', screen.height + 150)
+    .attr('y2', screen.height + 150)
+    .attr('stroke', style.tickLineColor)
+
+  makeHistogram({ country: 'Global', country_code: 'XXX', historyArray: data.globalHistory})
+
   dispatcher.on('datapointClick', (d) => {
     handleCountrySelect(d.country_code);
   });
@@ -99,7 +142,6 @@ function makeScales() {
     .range([0, screen.width])
     .domain(xDomain);
 
-  // const confirmed = data.docs.map(d => d.confirmed);
   const confirmed = data.countryDocs.reduce((a, c) => {
     const values = c.historyArray.map(h => h.confirmed)
     return [...a, ...values];
@@ -138,9 +180,7 @@ function getYAxis(){
 
 function makeAxes() {
 
-  xAxisSel
-
-    .call(getXAxis());
+  xAxisSel.call(getXAxis());
 
   xAxisSel.selectAll('.tick')
     .select('text')
@@ -150,7 +190,10 @@ function makeAxes() {
 
   xAxisSel.selectAll('.tick')
     .select('line')
-    .attr('stroke', style.tickLineColor);
+    .attr('stroke-dasharray', style.tickLineStyle)
+    .attr('stroke', style.tickLineColor)
+    .attr('y1', 0)
+    .attr('y2', -screen.height-screen.margin.bottom + screen.margin.top)
 
   if(screen.w >= THRESHOLD) {
 
@@ -167,10 +210,10 @@ function makeAxes() {
 
     yAxisSel.selectAll('.tick')
       .select('line')
+      .attr('stroke-dasharray', style.tickLineStyle)
+      .attr('stroke', style.tickLineColor)
       .attr('x1', -screen.width)
       .attr('x2', 0)
-      .attr('stroke-dasharray', style.tickLineStyle)
-      .attr('stroke', style.tickLineColor);
   }
 
   d3.selectAll('.domain').remove();
@@ -314,8 +357,6 @@ function handleCountrySelect(selectedCountry) {
     .attr('stroke-width', style.strokeWidth)
     d3.select(`circle.${prev.country_code}`)
       .attr('r', style.markerSize)
-      // .attr('stroke', color)
-      // .attr('stroke-width', style.strokeWidth)
       .attr('fill', color )
       .attr('filter', null)
   }
@@ -329,7 +370,6 @@ function handleCountrySelect(selectedCountry) {
     d3.select(`circle.${next.country_code}`)
       .attr('r', style.selectedMarkerSize)
       .attr('fill', style.strokeColorSelected)
-      // .attr('stroke', style.strokeColorSelected)
 
     d3.selectAll(`.${next.country_code}`)
       .attr('filter', 'url(#white-glow)')
@@ -338,10 +378,54 @@ function handleCountrySelect(selectedCountry) {
     label
       .attr('display', null)
       .attr('y', yScale(lastValue) - 6)
-      .text(`${next.country}, ${lastValue}`).moveToFront()
+      .text(`${next.country}, ${lastValue}`).moveToFront();
+
+
+    makeHistogram(next)
   }
 
   selected = selectedCountry;
+}
+
+function makeHistogram(next) {
+
+  const hDomain = d3.extent(next.historyArray.map(d => d[`${caseType}Change`]));
+
+  const hScale = d3.scaleLinear().domain(hDomain).range([150, 20]);
+  const [first, ...ticks] = hScale.ticks(4);
+
+    const hAxis = d3.axisRight(hScale).tickValues(ticks);
+    const axis = d3.select('.histogram-axis')
+      .attr('transform', screen.w >= THRESHOLD ? `translate(${screen.width}, 0)`: null)
+      .call(hAxis)
+
+    axis.select('.domain')
+      .remove();
+
+    axis.selectAll('.tick')
+      .select('text')
+      .attr('fill', style.tickTextColor)
+      .style('font-size', style.tickTextSize)
+      .style('font-family', style.fontFamily);
+
+  d3.select('.histogram-label').text(`${next.country}, ${next.historyArray[next.historyArray.length - 1][`${caseType}Change`]}`)
+  const dataSel = histogramSel.selectAll('line')
+    .data(next.historyArray, d => d.key);
+
+  const enterSelection = dataSel.enter()
+    .append('line')
+    .attr('class', 'hist-line')
+    .attr('stroke-width', 2)
+    .attr('fill', 'white')
+    .attr('stroke', 'white')
+
+  enterSelection.merge(dataSel)
+    .transition().duration(500).ease(d3.easeCircle)
+    .attr('x1', d => xScale(d.date))
+    .attr('y1', hScale(0))
+    .attr('x2', d => xScale(d.date))
+    .attr('y2', d => hScale(d[`${caseType}Change`]))
+
 }
 
 function handleCaseType(_caseType, _data) {
@@ -354,6 +438,10 @@ function handleCaseType(_caseType, _data) {
   updateInteractivePaths();
   updateCircleMarkers();
 
+  if(selected) {
+    const item = data.countryDocs.find(d => d.country === selected)
+    makeHistogram(item)
+  }
 }
 
 function updatePaths() {
