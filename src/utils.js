@@ -1,20 +1,31 @@
-import * as confirmedSrc from './fallback/data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv';
-import * as deathsSrc from './fallback/data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv';
-import * as wdvpSrc from './data/wdvp.data.csv';
-import * as d3 from 'd3';
+// import * as confirmedSrc from './fallback/data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv';
+// import * as deathsSrc from './fallback/data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv';
+// import * as wdvpSrc from './data/wdvp.data.csv';
+// import * as d3 from 'd3';
 
-import { group, rollup } from 'd3-array';
+import { group } from 'd3-array';
 
 import * as jsonData from './data/data.all.json';
 
 const caseTypes = [ 'confirmed', 'deaths' ];
 
-function getWDVPData() {
-  return d3.dsv(';', wdvpSrc)
-}
+
+// function getCSVData(caseType) {
+
+//   switch(caseType) {
+//     case 'deaths': return d3.dsv(',', deathsSrc)
+//     default: return d3.dsv(',', confirmedSrc)
+
+//   }
+
+// }
+
+// function getWDVPData() {
+//   return d3.dsv(';', wdvpSrc)
+// }
 
 async function prepData(caseType) {
-  let wdvp = await getWDVPData();
+  // let wdvp = await getWDVPData();
   let raw;
   let byCountryMap;
   let countryDocs;
@@ -64,16 +75,6 @@ function getJsonData(caseType) {
     return jsonData.default[caseType].locations.filter(d => d.country_code !== 'XX');
   }
   return jsonData.default['confirmed'].locations.filter(d => d.country_code !== 'XX');
-}
-
-function getCSVData(caseType) {
-
-  switch(caseType) {
-    case 'deaths': return d3.dsv(',', deathsSrc)
-    default: return d3.dsv(',', confirmedSrc)
-
-  }
-
 }
 
 function getValue(caseType, countryName, date) {
