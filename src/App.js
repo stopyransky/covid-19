@@ -219,7 +219,7 @@ function App() {
         position: w < THRESHOLD ? 'relative' : 'absolute',
         transform: w < THRESHOLD ? 'translate(-50%, 50px)' : null,
         left: w < THRESHOLD ? '50%' : '100px',
-        top: w < THRESHOLD ? '0%' : '200px',
+        top: w < THRESHOLD ? '0%' : '100px',
         width: w < THRESHOLD ? '100%': null,
         display: 'flex',
         flexFlow: 'column nowrap',
