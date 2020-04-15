@@ -448,7 +448,14 @@ function handleCaseType(_caseType, _data) {
   updateCircleMarkers();
 
   if(selected) {
-    const item = data.countryDocs.find(d => d.country === selected)
+    const item = data.countryDocs.find(d => d.country === selected);
+    const lastValue = item.historyArray[item.historyArray.length-1].confirmed;
+    selectLabel
+      .attr('display', null)
+      .text(`${item.country}, ${lastValue}`).moveToFront();
+
+    selectLabel.transition(t).attr('y', yScale(lastValue) - 6);
+
     makeHistogram(item)
   }
 }
