@@ -11,7 +11,7 @@ const format = d3.timeFormat('%d %b');
 const t = d3.transition().duration(1000).ease(d3.easeBack)
 
 const ticks = {
-  confirmed: [ 5, 50, 500, 5000, 50000 ],
+  confirmed: [ 5, 50, 500, 5000, 50000, 500000 ],
   deaths: [ 5, 50, 500, 5000 ],
   recovered: [ 5, 50, 500, 5000, 50000 ],
 
