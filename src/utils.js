@@ -1,10 +1,10 @@
 // import * as confirmedSrc from './fallback/data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv';
 // import * as deathsSrc from './fallback/data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv';
-// import * as wdvpSrc from './data/wdvp.data.csv';
-// import * as d3 from 'd3';
+import * as d3 from 'd3';
 
 import { group } from 'd3-array';
 
+import * as wdvpSrc from './data/wdvp.data.csv';
 import * as jsonData from './data/data.all.json';
 
 const caseTypes = [ 'confirmed', 'deaths' ];
@@ -20,12 +20,13 @@ const caseTypes = [ 'confirmed', 'deaths' ];
 
 // }
 
-// function getWDVPData() {
-//   return d3.dsv(';', wdvpSrc)
-// }
+function getWDVPData() {
+  return d3.dsv(';', wdvpSrc)
+}
 
 async function prepData(caseType) {
-  // let wdvp = await getWDVPData();
+  let wdvp = await getWDVPData();
+  console.log(wdvp)
   let raw;
   let byCountryMap;
   let countryDocs;
@@ -54,6 +55,17 @@ async function prepData(caseType) {
     return acc;
   }, [ { key: '1/21/20', date: new Date('1/21/20'), confirmed: 0, confirmedChange: 0, deaths: 0, deathsChange: 0 }]);
 
+  countryDocs.forEach(c => {
+    const doc = wdvp.find(d => d.ISO2 === c.country_code);
+    if(doc) {
+      c.population = doc.population
+      c.historyArray.forEach(h => {
+        h.confirmedPerMillion = Math.round(h.confirmed/c.population * 1000000);
+      })
+
+    }
+  })
+  console.log(countryDocs);
   countries = Array.from(new Set(countryDocs.map(d => d.country)))
     .sort((a, b) => {
       if(a > b) return 1;

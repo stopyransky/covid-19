@@ -10,6 +10,7 @@ const dispatcher = d3.dispatch('datapointClick')
 const format = d3.timeFormat('%d %b');
 const t = d3.transition().duration(1000).ease(d3.easeBack)
 
+const KEY = 'confirmed'; // 'confirmedPerMillion'
 const ticks = {
   confirmed: [ 5, 50, 500, 5000, 50000, 500000 ],
   deaths: [ 5, 50, 500, 5000 ],
@@ -141,11 +142,11 @@ function makeScales() {
     .range([0, screen.width])
     .domain(xDomain);
 
-  const confirmed = data.countryDocs.reduce((a, c) => {
-    const values = c.historyArray.map(h => h.confirmed)
+  const values = data.countryDocs.reduce((a, c) => {
+    const values = c.historyArray.map(h => h[KEY])
     return [...a, ...values];
   }, [])
-  yDomain = d3.extent(confirmed);
+  yDomain = d3.extent(values);
 
   yScale = d3.scaleSymlog()
     .range([screen.height, 0])
@@ -154,7 +155,7 @@ function makeScales() {
   lineGen = d3.line()
     .curve(d3.curveMonotoneX)
     .x(d => xScale(new Date(d.date)))
-    .y(d => yScale(+d.confirmed))
+    .y(d => yScale(+d[KEY]))
 }
 
 function getXTicks() {
@@ -228,7 +229,7 @@ function makeCircleMarkers() {
   .append('circle')
     .attr('class', d => `${d.country_code}` )
     .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
-    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
+    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1][KEY]))
     .attr('r', style.markerSize)
     .attr('fill', d => getPathColor(d))
     .attr('stroke', style.strokeColor)
@@ -240,7 +241,7 @@ function getPathColor(d, isDeselected) {
   if(!isDeselected && selected === d.country) {
     return style.strokeColorSelected;
   }
-  const latest = d.historyArray[d.historyArray.length-1].confirmed;
+  const latest = d.historyArray[d.historyArray.length-1][KEY];
 
   const s = yScale(latest)/yScale(yDomain[0]);
   let h = 0;
@@ -286,7 +287,7 @@ function makeInteractionPaths() {
     .attr('stroke', 'transparent')
     .attr('stroke-width', style.strokeWidthInteractive)
     .on('mouseover', (d, i, n) => {
-      const lastValue = d.historyArray[d.historyArray.length-1].confirmed;
+      const lastValue = d.historyArray[d.historyArray.length-1][KEY];
 
       if(selected !== d.country) {
         d3.selectAll(`path.${d.country_code}`)
@@ -371,7 +372,7 @@ function handleCountrySelect(selectedCountry) {
   }
 
   if(next) {
-    const lastValue = next.historyArray[next.historyArray.length-1].confirmed
+    const lastValue = next.historyArray[next.historyArray.length-1][KEY];
     d3.select(`path.${next.country_code}`)
     .attr('stroke', style.strokeColorSelected)
     .attr('stroke-width', style.strokeWidthSelected)
@@ -449,7 +450,7 @@ function handleCaseType(_caseType, _data) {
 
   if(selected) {
     const item = data.countryDocs.find(d => d.country === selected);
-    const lastValue = item.historyArray[item.historyArray.length-1].confirmed;
+    const lastValue = item.historyArray[item.historyArray.length-1][KEY];
     selectLabel
       .attr('display', null)
       .text(`${item.country}, ${lastValue}`).moveToFront();
@@ -491,7 +492,7 @@ function updateCircleMarkers() {
     .transition(t)
     .attr('fill', d => getPathColor(d))
     .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
-    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1].confirmed))
+    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1][KEY]))
 }
 
 const vis = {
