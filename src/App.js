@@ -233,7 +233,7 @@ function App() {
         <Subtitle />
         <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
         <CountrySelection />
-        <Switch />
+        {/* <Switch /> */}
         {w >= THRESHOLD && <Settings />}
       </div>
       <svg
