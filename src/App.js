@@ -65,6 +65,10 @@ function LinkItem({url, name}) {
     </span>
   )
 }
+
+function Switch() {
+  return (<div className="switch"><input type="checkbox" id="switch" /><label for="switch">Toggle</label> </div>)
+}
 const defaultState = { countries: [], selectedCountry: '', caseType: 'confirmed' }
 
 function reducer(state, action) {
@@ -229,6 +233,7 @@ function App() {
         <Subtitle />
         <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
         <CountrySelection />
+        <Switch />
         {w >= THRESHOLD && <Settings />}
       </div>
       <svg
