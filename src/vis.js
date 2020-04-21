@@ -9,8 +9,10 @@ const dispatcher = d3.dispatch('datapointClick')
 
 const format = d3.timeFormat('%d %b');
 const t = d3.transition().duration(1000).ease(d3.easeBack)
-
-const KEY = 'confirmed'; // 'confirmedPerMillion'
+const CONFIRMED = 'confirmed';
+const CONFIRMED_PER_MILLION = 'confirmedPerMillion';
+let isReady = false;
+let dataType = CONFIRMED;
 const ticks = {
   confirmed: [ 5, 50, 500, 5000, 50000, 500000 ],
   deaths: [ 5, 50, 500, 5000 ],
@@ -129,12 +131,13 @@ function init(svg, _data, _caseType) {
     .attr('y2', screen.height + 150)
     .attr('stroke', style.tickLineColor)
 
-  makeHistogram({ country: 'Global', country_code: 'XXX', historyArray: data.globalHistory})
+  makeHistogram({ country: 'Global', country_code: 'XXX', historyArray: data.globalHistory })
 
   dispatcher.on('datapointClick', (d) => {
     handleCountrySelect(d.country_code);
   });
 
+ isReady = true;
 }
 
 function makeScales() {
@@ -143,7 +146,7 @@ function makeScales() {
     .domain(xDomain);
 
   const values = data.countryDocs.reduce((a, c) => {
-    const values = c.historyArray.map(h => h[KEY])
+    const values = c.historyArray.map(h => h[dataType])
     return [...a, ...values];
   }, [])
   yDomain = d3.extent(values);
@@ -155,7 +158,7 @@ function makeScales() {
   lineGen = d3.line()
     .curve(d3.curveMonotoneX)
     .x(d => xScale(new Date(d.date)))
-    .y(d => yScale(+d[KEY]))
+    .y(d => yScale(+d[dataType]))
 }
 
 function getXTicks() {
@@ -228,8 +231,8 @@ function makeCircleMarkers() {
   .enter()
   .append('circle')
     .attr('class', d => `${d.country_code}` )
-    .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
-    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1][KEY]))
+    .attr('cx', d => xScale(getLastDate(d)))
+    .attr('cy', d => yScale(getLastValue(d)))
     .attr('r', style.markerSize)
     .attr('fill', d => getPathColor(d))
     .attr('stroke', style.strokeColor)
@@ -241,7 +244,7 @@ function getPathColor(d, isDeselected) {
   if(!isDeselected && selected === d.country) {
     return style.strokeColorSelected;
   }
-  const latest = d.historyArray[d.historyArray.length-1][KEY];
+  const latest = getLastValue(d);
 
   const s = yScale(latest)/yScale(yDomain[0]);
   let h = 0;
@@ -274,6 +277,27 @@ function makePaths() {
   .style('pointer-events', 'none')
 }
 
+function getLastValue(d) {
+  return d.historyArray[d.historyArray.length-1][dataType];
+}
+
+function getLastDate(d) {
+  return d.historyArray[d.historyArray.length-1].date;
+}
+
+function hideLabel() {
+  label.attr('display', 'none')
+}
+function showLabel(d) {
+      const lastValue = getLastValue(d);
+
+      label
+        .attr('display', null)
+        .attr('y', yScale(lastValue) - 6)
+        .text(`${d.country}, ${lastValue}`)
+        .moveToFront();
+}
+
 function makeInteractionPaths() {
   const g = mainSel.append('g').attr('class', 'interactive')
 
@@ -287,7 +311,6 @@ function makeInteractionPaths() {
     .attr('stroke', 'transparent')
     .attr('stroke-width', style.strokeWidthInteractive)
     .on('mouseover', (d, i, n) => {
-      const lastValue = d.historyArray[d.historyArray.length-1][KEY];
 
       if(selected !== d.country) {
         d3.selectAll(`path.${d.country_code}`)
@@ -300,13 +323,7 @@ function makeInteractionPaths() {
           // .attr('stroke-width', style.strokeWidthHover)
           .moveToFront()
       }
-
-
-      label
-        .attr('display', null)
-        .attr('y', yScale(lastValue) - 6)
-        .text(`${d.country}, ${lastValue}`)
-        .moveToFront()
+      showLabel(d);
     })
     .on('mouseout', (d, i, n) => {
       if(selected !== d.country) {
@@ -319,8 +336,8 @@ function makeInteractionPaths() {
           // .attr('stroke', strokeColor)
           // .attr('stroke-width', style.strokeWidth)
           .attr('fill', strokeColor)
-        // label.moveToFront()
-        label.attr('display', 'none')
+
+        hideLabel()
       }
       const sel = data.countryDocs.find((d) => d.country === selected )
       sel && d3.select(`.${sel.country_code}`).moveToFront()
@@ -372,7 +389,7 @@ function handleCountrySelect(selectedCountry) {
   }
 
   if(next) {
-    const lastValue = next.historyArray[next.historyArray.length-1][KEY];
+    const lastValue = getLastValue(next);
     d3.select(`path.${next.country_code}`)
     .attr('stroke', style.strokeColorSelected)
     .attr('stroke-width', style.strokeWidthSelected)
@@ -442,15 +459,19 @@ function handleCaseType(_caseType, _data) {
   caseType = _caseType;
   data = _data;
 
-  label.attr('display', 'none')
+  hideLabel()
 
   updatePaths();
   updateInteractivePaths();
   updateCircleMarkers();
 
-  if(selected) {
+  updateSelectLabel();
+}
+
+function updateSelectLabel() {
+    if(selected) {
     const item = data.countryDocs.find(d => d.country === selected);
-    const lastValue = item.historyArray[item.historyArray.length-1][KEY];
+    const lastValue = getLastValue(item);
     selectLabel
       .attr('display', null)
       .text(`${item.country}, ${lastValue}`).moveToFront();
@@ -460,7 +481,6 @@ function handleCaseType(_caseType, _data) {
     makeHistogram(item)
   }
 }
-
 function updatePaths() {
   paths.data(data.countryDocs, d => d.country_code)
   paths.exit().remove();
@@ -491,14 +511,25 @@ function updateCircleMarkers() {
     .attr('class', d => d.country_code )
     .transition(t)
     .attr('fill', d => getPathColor(d))
-    .attr('cx', d => xScale(d.historyArray[d.historyArray.length-1].date))
-    .attr('cy', d => yScale(d.historyArray[d.historyArray.length-1][KEY]))
+    .attr('cx', d => xScale(getLastDate(d)))
+    .attr('cy', d => yScale(getLastValue(d)))
 }
 
+function handleDataType(perMillion) {
+  if(isReady) {
+    dataType = perMillion ? CONFIRMED_PER_MILLION : CONFIRMED;
+    updatePaths();
+    updateInteractivePaths();
+    updateCircleMarkers();
+    updateSelectLabel();
+  }
+
+}
 const vis = {
   init,
   handleCountrySelect,
   handleCaseType,
+  handleDataType,
   style,
   dispatcher
 }

@@ -26,7 +26,6 @@ function getWDVPData() {
 
 async function prepData(caseType) {
   let wdvp = await getWDVPData();
-  console.log(wdvp)
   let raw;
   let byCountryMap;
   let countryDocs;
@@ -60,12 +59,13 @@ async function prepData(caseType) {
     if(doc) {
       c.population = doc.population
       c.historyArray.forEach(h => {
-        h.confirmedPerMillion = Math.round(h.confirmed/c.population * 1000000);
+        const value = h.confirmed/c.population * 1000000 || 0;
+        h.confirmedPerMillion = Math.round(value);
       })
 
     }
   })
-  console.log(countryDocs);
+
   countries = Array.from(new Set(countryDocs.map(d => d.country)))
     .sort((a, b) => {
       if(a > b) return 1;

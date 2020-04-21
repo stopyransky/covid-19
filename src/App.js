@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useReducer, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import 'i18next-browser-languagedetector';
 
-import './App.css';
+// import './App.css';
 import Utils from './utils';
 
 import vis from './vis';
@@ -66,10 +66,10 @@ function LinkItem({url, name}) {
   )
 }
 
-function Switch() {
-  return (<div className="switch"><input type="checkbox" id="switch" /><label for="switch">Toggle</label> </div>)
+function Switch({onChange}) {
+  return (<div className="switch" style={{ }}><input type="checkbox" id="switch" onChange={onChange}/><label htmlFor="switch">per million</label> </div>)
 }
-const defaultState = { countries: [], selectedCountry: '', caseType: 'confirmed' }
+const defaultState = { countries: [], selectedCountry: '', caseType: 'confirmed', perMillion: false }
 
 function reducer(state, action) {
   switch(action.type) {
@@ -82,6 +82,9 @@ function reducer(state, action) {
     case 'caseType': {
       return { ...state, caseType: action.value }
     }
+    case 'perMillion': {
+      return { ...state, perMillion: !state.perMillion }
+    }
     default: return state;
   }
 }
@@ -90,7 +93,7 @@ function App() {
   const svgRef = useRef(null);
   const [ t, i18n ] = useTranslation();
   const [ state, dispatch ] = useReducer(reducer, defaultState);
-  const setState = (type, value) => dispatch({ type, value });
+  const setState = (type, value = null) => dispatch({ type, value });
 
   useEffect(useCallback(() => {
     Utils.prepData(state.caseType, IS_FALLBACK).then(data => {
@@ -109,6 +112,11 @@ function App() {
     }
 
   }, [state.caseType]), []);
+
+  useEffect(useCallback(()=> {
+    vis && vis.handleDataType(state.perMillion);
+  }, [state.perMillion]), [state.perMillion]);
+
 
   useEffect(() => {
 
@@ -233,7 +241,7 @@ function App() {
         <Subtitle />
         <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
         <CountrySelection />
-        {/* <Switch /> */}
+        {/* <Switch onChange={() => setState('perMillion') }/> */}
         {w >= THRESHOLD && <Settings />}
       </div>
       <svg
