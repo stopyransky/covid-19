@@ -69,15 +69,22 @@ function LinkItem({url, name}) {
 function Switch({onChange}) {
   return (<div className="switch" style={{ }}><input type="checkbox" id="switch" onChange={onChange}/><label htmlFor="switch">per million</label> </div>)
 }
-const defaultState = { countries: [], selectedCountry: '', caseType: 'confirmed', perMillion: false }
+
+const defaultState = { countries: [], regions: [], selectedRegion: '', selectedCountry: '', caseType: 'confirmed', perMillion: false }
 
 function reducer(state, action) {
   switch(action.type) {
     case 'countries': {
       return { ...state, countries: action.value };
     }
+    case 'regions': {
+      return { ...state, regions: action.value };
+    }
     case 'selectedCountry' : {
       return { ...state, selectedCountry: action.value};
+    }
+    case 'selectedRegion' : {
+      return { ...state, selectedRegion: action.value};
     }
     case 'caseType': {
       return { ...state, caseType: action.value }
@@ -100,7 +107,7 @@ function App() {
 
       vis.init(svgRef.current, data, state.caseType);
       setState('countries', data.countries);
-
+      setState('regions', data.regions)
       vis.dispatcher.on('datapointClick', (d) => {
         setState('selectedCountry', d.country)
       });
@@ -143,8 +150,12 @@ function App() {
   }, [state.caseType]), [state.caseType]);
 
   useEffect(() => {
-    state.selectedCountry && vis.handleCountrySelect(state.selectedCountry)
+    state.selectedCountry && vis.handleCountrySelect(state.selectedCountry);
   }, [ state.selectedCountry ]);
+
+  useEffect(() => {
+    state.selectedRegion && vis.handleRegionFilter(state.selectedRegion);
+  }, [ state.selectedRegion ]);
 
   const w = window.innerWidth;
 
@@ -173,7 +184,27 @@ function App() {
       </div>
     )
   }
-
+  function RegionFilter() {
+    return (
+      <div style={{ display: 'flex', flexFlow: 'column nowrap', justifyContent: 'center'}}>
+        <h3 className={'display'} style={{
+            fontWeight: 700,
+            fontSize: '12px',
+            margin: '10px 0px',
+            color: vis.style.strokeColor
+          }}>{t('Filter by region')}
+        </h3>
+          <select className={'select'}
+            style={{ color: w < THRESHOLD ? 'white': 'black', width: '200px', margin: '5px 0px'}}
+            value={state.selectedRegion} onChange={e => {
+              setState('selectedRegion', e.target.value)
+            }}>
+            {!state.selectedRegion && <option value={''} key={-1} >{t('Region Filters')}</option>}
+            {state.regions.map(c => (<option value={c} key={c}>{c}</option>))}
+        </select>
+      </div>
+    )
+  }
   function Title() {
     return (
       <h1 className={'display'} style={{
@@ -241,6 +272,7 @@ function App() {
         <Subtitle />
         <DatasetSelection selected={state.caseType} onChange={v => setState('caseType', v)}/>
         <CountrySelection />
+        {/* <RegionFilter /> */}
         {/* <Switch onChange={() => setState('perMillion') }/> */}
         {w >= THRESHOLD && <Settings />}
       </div>

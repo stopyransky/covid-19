@@ -14,7 +14,7 @@ const CONFIRMED_PER_MILLION = 'confirmedPerMillion';
 let isReady = false;
 let dataType = CONFIRMED;
 const ticks = {
-  confirmed: [ 5, 50, 500, 5000, 50000, 500000 ],
+  confirmed: [ 10, 100, 1000, 10000, 100000, 1000000 ],
   deaths: [ 5, 50, 500, 5000 ],
   recovered: [ 5, 50, 500, 5000, 50000 ],
 
@@ -41,8 +41,8 @@ const style = {
 }
 
 let selected = '';
-let data, screen, caseType;
-let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label, selectLabel, areaSel, histogramSel;
+let data, screen, caseType, regionFilter;
+let svgSel, mainSel, xAxisSel, yAxisSel, circleMarkers, paths, interactivePaths, label, selectLabel, histogramSel;
 let xScale, yScale, xDomain, yDomain, lineGen;
 
 function init(svg, _data, _caseType) {
@@ -140,6 +140,9 @@ function init(svg, _data, _caseType) {
  isReady = true;
 }
 
+function getFilteredData() {
+  return regionFilter ? data.countryDocs.filter(d => d.region === regionFilter) : data.countryDocs;
+}
 function makeScales() {
   xScale = d3.scaleTime()
     .range([0, screen.width])
@@ -414,6 +417,11 @@ function handleCountrySelect(selectedCountry) {
   selected = selectedCountry;
 }
 
+function handleRegionFilter(selectedRegion) {
+  regionFilter = selectedRegion;
+
+}
+
 function makeHistogram(next) {
 
   const hDomain = d3.extent(next.historyArray.map(d => d[`${caseType}Change`]));
@@ -460,11 +468,9 @@ function handleCaseType(_caseType, _data) {
   data = _data;
 
   hideLabel()
-
   updatePaths();
   updateInteractivePaths();
   updateCircleMarkers();
-
   updateSelectLabel();
 }
 
@@ -528,6 +534,7 @@ function handleDataType(perMillion) {
 const vis = {
   init,
   handleCountrySelect,
+  handleRegionFilter,
   handleCaseType,
   handleDataType,
   style,

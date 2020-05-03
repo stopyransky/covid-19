@@ -25,7 +25,9 @@ function getWDVPData() {
 }
 
 async function prepData(caseType) {
-  let wdvp = await getWDVPData();
+  const wdvp = await getWDVPData();
+  const regions = Array.from(new Set(wdvp.map(d => d.region)));
+
   let raw;
   let byCountryMap;
   let countryDocs;
@@ -58,11 +60,11 @@ async function prepData(caseType) {
     const doc = wdvp.find(d => d.ISO2 === c.country_code);
     if(doc) {
       c.population = doc.population
+      c.region = doc.region;
       c.historyArray.forEach(h => {
         const value = h.confirmed/c.population * 1000000 || 0;
         h.confirmedPerMillion = Math.round(value);
-      })
-
+      });
     }
   })
 
@@ -76,6 +78,7 @@ async function prepData(caseType) {
   return {
     countryDocs,
     countries,
+    regions,
     globalHistory,
   }
 
