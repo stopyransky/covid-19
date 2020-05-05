@@ -9,17 +9,6 @@ import * as jsonData from './data/data.all.json';
 
 const caseTypes = [ 'confirmed', 'deaths' ];
 
-
-// function getCSVData(caseType) {
-
-//   switch(caseType) {
-//     case 'deaths': return d3.dsv(',', deathsSrc)
-//     default: return d3.dsv(',', confirmedSrc)
-
-//   }
-
-// }
-
 function getWDVPData() {
   return d3.dsv(';', wdvpSrc)
 }
