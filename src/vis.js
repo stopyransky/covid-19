@@ -20,7 +20,7 @@ const ticks = {
 
 }
 
-const style = {
+export const style = {
   fontFamily: 'Playfair Display',
   strokeColor: '#FFC042',
   strokeWidth: 1,
@@ -55,7 +55,7 @@ function init(svg, _data, _caseType) {
 
   const margin = {
     top: 50,
-    bottom: 200,
+    bottom: 220,
     left: 30,
     right: w < THRESHOLD ? 30: 200,
   }
@@ -91,18 +91,18 @@ function init(svg, _data, _caseType) {
   makeInteractionPaths();
   makeLabel();
 
-  histogramSel = mainSel.append('g')
-    .attr('class', 'histogram')
-    .attr('transform', `translate(${0}, ${screen.height})`)
-
-  histogramSel.append('g').attr('class', 'histogram-axis');
-
   mainSel.append('line')
     .attr('x1', 0)
     .attr('x2', screen.width)
     .attr('y1', screen.height + 10)
     .attr('y2', screen.height + 10)
     .attr('stroke', style.tickLineColor)
+
+  histogramSel = mainSel.append('g')
+    .attr('class', 'histogram')
+    .attr('transform', `translate(${0}, ${screen.height})`)
+
+  histogramSel.append('g').attr('class', 'histogram-axis');
 
   histogramSel.append('text')
   .attr('class', 'histogram-caption')
@@ -422,7 +422,7 @@ function handleRegionFilter(selectedRegion) {
 
 }
 
-function makeHistogram(next) {
+export function makeHistogram(next) {
 
   const hDomain = d3.extent(next.historyArray.map(d => d[`${caseType}Change`]));
 
@@ -444,7 +444,7 @@ function makeHistogram(next) {
       .style('font-family', style.fontFamily);
 
   d3.select('.histogram-label').text(`${next.country}, ${next.historyArray[next.historyArray.length - 1][`${caseType}Change`]}`)
-  const dataSel = histogramSel.selectAll('line')
+  const dataSel = d3.select('.histogram').selectAll('line')
     .data(next.historyArray, d => d.key);
 
   const enterSelection = dataSel.enter()
